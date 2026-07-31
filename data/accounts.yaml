@@ -1,0 +1,14 @@
+# Quatro contas, uma fronteira de isolamento cada. O trust cross-account entre elas é onde
+# o privilege escalation mora (ver roles.yaml).
+- id: acc-mgmt
+  name: Org Management
+  environment: management
+- id: acc-prod
+  name: Prod Payments
+  environment: production
+- id: acc-dev
+  name: Dev Sandbox
+  environment: development
+- id: acc-sec
+  name: Security Audit
+  environment: security

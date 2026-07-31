@@ -1,0 +1,118 @@
+# Grants atômicos. privilege_level guia o risk scoring e quais targets a auditoria de
+# reachability olha (high + critical). assume_targets modelam sts:AssumeRole e criam as
+# arestas de escalonamento quando a trust policy do role-alvo admite a conta de origem.
+
+# --- Org Management ---------------------------------------------------------
+- id: ent-mgmt-iam-admin
+  account_id: acc-mgmt
+  name: Management IAM administration
+  actions: ["iam:*"]
+  privilege_level: critical
+  tags: [admin]
+  description: Controle total de IAM na conta de management.
+- id: ent-mgmt-billing
+  account_id: acc-mgmt
+  name: Billing management
+  actions: ["aws-portal:*", "budgets:*"]
+  privilege_level: medium
+  tags: [finance, billing]
+- id: ent-mgmt-org-read
+  account_id: acc-mgmt
+  name: Organizations read-only
+  actions: ["organizations:Describe*", "organizations:List*"]
+  privilege_level: low
+
+# --- Prod Payments ----------------------------------------------------------
+- id: ent-prod-iam-admin
+  account_id: acc-prod
+  name: Production IAM administration
+  actions: ["iam:*"]
+  privilege_level: critical
+  tags: [admin]
+- id: ent-prod-db-admin
+  account_id: acc-prod
+  name: Production database administration
+  actions: ["rds:*", "s3:*"]
+  privilege_level: critical
+  tags: [data]
+- id: ent-prod-deploy
+  account_id: acc-prod
+  name: Deploy to production
+  actions: ["codedeploy:*", "ecs:UpdateService"]
+  privilege_level: high
+  tags: [deploy]
+- id: ent-prod-approve-change
+  account_id: acc-prod
+  name: Approve production change
+  actions: ["change:Approve"]
+  privilege_level: high
+  tags: [approve, change]
+- id: ent-prod-create-vendor
+  account_id: acc-prod
+  name: Create vendor
+  actions: ["vendor:Create", "vendor:Update"]
+  privilege_level: medium
+  tags: [finance, vendor]
+- id: ent-prod-approve-payment
+  account_id: acc-prod
+  name: Approve payment
+  actions: ["payment:Approve"]
+  privilege_level: high
+  tags: [finance, payment]
+- id: ent-prod-db-read
+  account_id: acc-prod
+  name: Production database read-only
+  actions: ["rds:Describe*", "s3:GetObject"]
+  privilege_level: medium
+  tags: [data]
+- id: ent-prod-read-logs
+  account_id: acc-prod
+  name: Read production logs
+  actions: ["logs:GetLogEvents", "logs:FilterLogEvents"]
+  privilege_level: low
+
+# --- Dev Sandbox ------------------------------------------------------------
+- id: ent-dev-admin
+  account_id: acc-dev
+  name: Dev sandbox administration
+  actions: ["*:*"]
+  privilege_level: high
+  tags: [admin]
+- id: ent-dev-assume-prod
+  account_id: acc-dev
+  name: Assume production break-glass role
+  actions: ["sts:AssumeRole"]
+  privilege_level: medium
+  tags: [assume]
+  assume_targets: [role-prod-breakglass]
+- id: ent-dev-deploy
+  account_id: acc-dev
+  name: Deploy to dev
+  actions: ["codedeploy:*"]
+  privilege_level: medium
+  tags: [deploy]
+- id: ent-dev-read
+  account_id: acc-dev
+  name: Dev read-only
+  actions: ["ec2:Describe*", "logs:GetLogEvents"]
+  privilege_level: low
+
+# --- Security Audit ---------------------------------------------------------
+- id: ent-sec-audit-read
+  account_id: acc-sec
+  name: Audit read-only
+  actions: ["cloudtrail:LookupEvents", "config:Get*", "config:Describe*"]
+  privilege_level: low
+  tags: [audit]
+- id: ent-sec-assume-any
+  account_id: acc-sec
+  name: Assume incident-response and org-admin roles
+  actions: ["sts:AssumeRole"]
+  privilege_level: high
+  tags: [assume]
+  assume_targets: [role-sec-ir, role-mgmt-orgadmin]
+- id: ent-sec-siem-admin
+  account_id: acc-sec
+  name: SIEM administration
+  actions: ["siem:*"]
+  privilege_level: high

@@ -1,0 +1,21 @@
+# Tunables de governança. Guardados em dados para a run ser reproduzível e as definições
+# serem auditáveis em vez de hardcoded.
+
+# Uma identity ativa sem atividade além desta quantidade de dias conta como dormante.
+dormancy_days: 90
+
+# Baselines de joiner: o conjunto exato de grupos que um título deveria ter. O que falta é
+# under-provisioning; o que sobra é o sinal de mover e alimenta o privilege creep.
+baselines:
+  - title: Finance Lead
+    group_ids: [grp-prod-finance-lead]
+  - title: Payments Analyst
+    group_ids: [grp-prod-payments-ops]
+  - title: Release Engineer
+    group_ids: [grp-prod-deployers]
+  - title: DBA
+    group_ids: [grp-prod-dba]
+  - title: Dev Engineer
+    group_ids: [grp-dev-engineers]
+  - title: Security Auditor
+    group_ids: [grp-sec-auditors]

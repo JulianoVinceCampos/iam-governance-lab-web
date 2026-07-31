@@ -1,0 +1,207 @@
+# Pessoas e service accounts sintéticas. Nomes fictícios. Cada uma foi posta para exercitar
+# um finding específico; os comentários dizem qual.
+
+# Managers / liderança
+- id: id-ivan
+  name: Ivan Prado
+  type: human
+  department: Platform
+  title: Org Admin
+  home_account_id: acc-mgmt
+  status: active
+  hire_date: 2019-03-01
+  last_activity_days: 3
+  group_ids: [grp-mgmt-admins]
+
+- id: id-quinn
+  name: Quinn Barros
+  type: human
+  department: Engineering
+  title: Engineering Manager
+  home_account_id: acc-dev
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 4
+  group_ids: [grp-dev-admins]        # dev admin + assume-prod herdado: superfície de escalonamento
+
+- id: id-rachel
+  name: Rachel Souza
+  type: human
+  department: Security
+  title: Security Manager
+  home_account_id: acc-sec
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 5
+  group_ids: [grp-sec-ir]            # assume-any: alcança mgmt admin via wildcard trust
+
+# Finance: armadilha de SoD (herdado e procedência mista)
+- id: id-alice
+  name: Alice Moreira
+  type: human
+  department: Finance
+  title: Finance Lead
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 2
+  group_ids: [grp-prod-finance-lead]  # herda create-vendor + approve-payment: SoD critical
+
+- id: id-bob
+  name: Bob Antunes
+  type: human
+  department: Finance
+  title: Payments Analyst
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-alice
+  last_activity_days: 4
+  group_ids: [grp-prod-payments-ops]
+  entitlement_ids: [ent-prod-approve-payment]  # vendor por grupo + payment direto: SoD misto
+
+- id: id-mallory
+  name: Mallory Reis
+  type: human
+  department: Finance
+  title: Payments Analyst
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-alice
+  last_activity_days: 150            # dormante com acesso medium
+  group_ids: [grp-prod-payments-ops]
+
+- id: id-nathan
+  name: Nathan Brito
+  type: human
+  department: Finance
+  title: Finance Lead
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 8
+  group_ids: [grp-prod-payments-ops]  # título Finance Lead mas under-provisioned: joiner gap
+
+# Engineering: SoD de deploy/approve e privilege creep
+- id: id-carol
+  name: Carol Fontes
+  type: human
+  department: Engineering
+  title: Release Engineer
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 1
+  group_ids: [grp-prod-deployers]
+  entitlement_ids: [ent-prod-approve-change]  # deploy por grupo + approve direto: SoD high
+
+- id: id-olivia
+  name: Olivia Duarte
+  type: human
+  department: Engineering
+  title: Release Engineer
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-carol
+  last_activity_days: 3
+  group_ids: [grp-prod-deployers, grp-prod-change-approvers]  # SoD + privilege creep + joiner extra
+
+- id: id-dave
+  name: Dave Nunes
+  type: human
+  department: Data
+  title: DBA
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 6
+  group_ids: [grp-prod-dba]           # db-admin critical, sem SoD: recert score alto
+
+# Dev: escalonamento cross-account para produção
+- id: id-erin
+  name: Erin Vasquez
+  type: human
+  department: Engineering
+  title: Dev Engineer
+  home_account_id: acc-dev
+  status: active
+  manager_id: id-quinn
+  last_activity_days: 2
+  group_ids: [grp-dev-engineers]      # assume-prod: escalonamento dev -> prod admin
+
+- id: id-frank
+  name: Frank Oliveira
+  type: human
+  department: Engineering
+  title: Dev Engineer
+  home_account_id: acc-dev
+  status: active
+  manager_id: id-quinn
+  last_activity_days: 5
+  group_ids: [grp-dev-admins]         # título Dev Engineer mas carrega admin: privilege creep
+
+- id: id-svc-deployer
+  name: svc-deployer
+  type: service
+  department: Engineering
+  title: Service Account
+  home_account_id: acc-dev
+  status: active
+  last_activity_days: 1
+  group_ids: [grp-dev-engineers]      # service account com um caminho de escalonamento
+
+# Security
+- id: id-heidi
+  name: Heidi Costa
+  type: human
+  department: Security
+  title: Incident Responder
+  home_account_id: acc-sec
+  status: active
+  manager_id: id-rachel
+  last_activity_days: 7
+  group_ids: [grp-sec-ir]             # sec -> mgmt admin via wildcard trust
+
+- id: id-grace
+  name: Grace Lima
+  type: human
+  department: Security
+  title: Security Auditor
+  home_account_id: acc-sec
+  status: active
+  manager_id: id-rachel
+  last_activity_days: 200            # dormante com acesso low
+  group_ids: [grp-sec-auditors]
+
+- id: id-judy
+  name: Judy Ramos
+  type: human
+  department: Finance
+  title: Billing Analyst
+  home_account_id: acc-mgmt
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 9
+  group_ids: [grp-mgmt-finance]
+
+# Leavers com acesso ainda vinculado
+- id: id-ken
+  name: Ken Silva
+  type: human
+  department: Engineering
+  title: Dev Engineer
+  home_account_id: acc-dev
+  status: terminated
+  manager_id: id-quinn
+  last_activity_days: 120
+  group_ids: [grp-dev-engineers]      # terminated mas ainda engineer: orphaned + escalonamento
+
+- id: id-laura
+  name: Laura Pinto
+  type: human
+  department: Data
+  title: DBA
+  home_account_id: acc-prod
+  status: disabled
+  manager_id: id-ivan
+  last_activity_days: 60
+  entitlement_ids: [ent-prod-db-read]  # disabled mas mantém um grant direto: orphaned

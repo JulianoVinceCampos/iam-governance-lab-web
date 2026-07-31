@@ -1,0 +1,66 @@
+# Grupos RBAC. member_of aninha um grupo num pai, então membros herdam os entitlements do
+# pai. grp-prod-finance-lead é a armadilha clássica: aninha tanto o grupo de ops (create
+# vendor) quanto o de approvers (approve payment), então todo finance lead herda uma toxic
+# combination sem um único grant direto.
+
+# --- Prod Payments ----------------------------------------------------------
+- id: grp-prod-payments-ops
+  account_id: acc-prod
+  name: Payments Ops
+  entitlement_ids: [ent-prod-create-vendor, ent-prod-db-read]
+- id: grp-prod-payments-approvers
+  account_id: acc-prod
+  name: Payments Approvers
+  entitlement_ids: [ent-prod-approve-payment]
+- id: grp-prod-finance-lead
+  account_id: acc-prod
+  name: Finance Lead
+  member_of: [grp-prod-payments-ops, grp-prod-payments-approvers]
+  description: Aninha ops e approvers, que é de onde vem o SoD herdado.
+- id: grp-prod-deployers
+  account_id: acc-prod
+  name: Release Deployers
+  entitlement_ids: [ent-prod-deploy]
+- id: grp-prod-change-approvers
+  account_id: acc-prod
+  name: Change Approvers
+  entitlement_ids: [ent-prod-approve-change]
+- id: grp-prod-dba
+  account_id: acc-prod
+  name: Database Admins
+  entitlement_ids: [ent-prod-db-admin, ent-prod-db-read]
+- id: grp-prod-readonly
+  account_id: acc-prod
+  name: Production Read-only
+  entitlement_ids: [ent-prod-db-read, ent-prod-read-logs]
+
+# --- Dev Sandbox ------------------------------------------------------------
+- id: grp-dev-engineers
+  account_id: acc-dev
+  name: Dev Engineers
+  entitlement_ids: [ent-dev-deploy, ent-dev-read, ent-dev-assume-prod]
+- id: grp-dev-admins
+  account_id: acc-dev
+  name: Dev Admins
+  entitlement_ids: [ent-dev-admin]
+  member_of: [grp-dev-engineers]
+
+# --- Security Audit ---------------------------------------------------------
+- id: grp-sec-auditors
+  account_id: acc-sec
+  name: Security Auditors
+  entitlement_ids: [ent-sec-audit-read]
+- id: grp-sec-ir
+  account_id: acc-sec
+  name: Incident Response
+  entitlement_ids: [ent-sec-assume-any, ent-sec-siem-admin]
+
+# --- Org Management ---------------------------------------------------------
+- id: grp-mgmt-admins
+  account_id: acc-mgmt
+  name: Management Admins
+  entitlement_ids: [ent-mgmt-iam-admin, ent-mgmt-billing, ent-mgmt-org-read]
+- id: grp-mgmt-finance
+  account_id: acc-mgmt
+  name: Management Finance
+  entitlement_ids: [ent-mgmt-billing]

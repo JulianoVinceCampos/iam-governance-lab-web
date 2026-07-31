@@ -1,0 +1,29 @@
+# Principals assumíveis. trusts é o lado resource-based do AssumeRole: quais contas de origem
+# podem assumir o role. "*" é um wildcard trust e é reportado como risco à parte, porque
+# qualquer conta que consiga chamar AssumeRole o alcança.
+
+- id: role-prod-breakglass
+  account_id: acc-prod
+  name: Production break-glass admin
+  entitlement_ids: [ent-prod-iam-admin, ent-prod-db-admin]
+  trusts: [acc-dev, acc-sec]
+  description: Admin de emergência em produção, confiado pelas contas de dev e security.
+
+- id: role-prod-deployer
+  account_id: acc-prod
+  name: Production deployer
+  entitlement_ids: [ent-prod-deploy]
+  trusts: [acc-dev]
+
+- id: role-sec-ir
+  account_id: acc-sec
+  name: Security incident response
+  entitlement_ids: [ent-sec-siem-admin]
+  trusts: [acc-sec, acc-mgmt]
+
+- id: role-mgmt-orgadmin
+  account_id: acc-mgmt
+  name: Management org admin
+  entitlement_ids: [ent-mgmt-iam-admin]
+  trusts: ["*"]
+  description: Wildcard trust de propósito, para exercitar o finding de wildcard-reachability.

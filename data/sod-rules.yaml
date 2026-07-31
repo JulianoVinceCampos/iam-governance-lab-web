@@ -1,0 +1,42 @@
+# Toxic combinations. Uma violação precisa de um match em set_a e um em set_b, em dois
+# entitlements distintos. Selectors casam por entitlement id, glob de action, ou tag.
+
+- id: sod-finance-vendor-payment
+  name: Create vendor and approve payment
+  severity: critical
+  set_a:
+    - match: tag
+      values: [vendor]
+  set_b:
+    - match: tag
+      values: [payment]
+  rationale: >
+    A mesma identity não deveria conseguir onboardar um vendor e aprovar pagamentos a ele.
+    É o control financeiro canônico de SoD.
+
+- id: sod-deploy-approve-change
+  name: Deploy to production and approve the change
+  severity: high
+  set_a:
+    - match: tag
+      values: [deploy]
+  set_b:
+    - match: tag
+      values: [approve]
+  rationale: >
+    Quem sobe uma mudança para produção não pode ser também quem aprova. Mantém um segundo
+    par de olhos em cada release.
+
+- id: sod-iam-admin-and-payment
+  name: IAM administration and payment approval
+  severity: high
+  set_a:
+    - match: action
+      values: ["iam:*"]
+  set_b:
+    - match: tag
+      values: [payment]
+  rationale: >
+    Um IAM administrator que também aprova pagamentos poderia se conceder o direito de
+    aprovação e usá-lo. Não deve produzir violações neste dataset, e esse é o ponto: o engine
+    reporta o que existe, não o que a gente gostaria de achar.
