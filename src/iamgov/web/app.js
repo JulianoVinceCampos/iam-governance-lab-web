@@ -144,6 +144,27 @@ async function loadOverview() {
     : `<div class="empty">Sem caminhos de escalonamento cross-account.</div>`;
 }
 
+const centerTotal = {
+  id: "centerTotal",
+  afterDraw(chart) {
+    const ds = chart.data.datasets[0];
+    const total = ds.data.reduce((a, b) => a + (b || 0), 0);
+    const { ctx } = chart;
+    const x = (chart.chartArea.left + chart.chartArea.right) / 2;
+    const y = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#e6e9f2";
+    ctx.font = "700 30px 'Segoe UI', sans-serif";
+    ctx.fillText(String(total), x, y - 8);
+    ctx.fillStyle = "#8b93a7";
+    ctx.font = "12px 'Segoe UI', sans-serif";
+    ctx.fillText("violações", x, y + 16);
+    ctx.restore();
+  },
+};
+
 function drawSodChart(bySeverity) {
   const ctx = el("chart-sod");
   state.charts.sod?.destroy();
@@ -155,12 +176,23 @@ function drawSodChart(bySeverity) {
         {
           data: [bySeverity.low, bySeverity.medium, bySeverity.high, bySeverity.critical],
           backgroundColor: ["#4b9e6a", "#d6a53c", "#e0793b", "#e0556b"],
-          borderColor: "#171d2b",
-          borderWidth: 2,
+          borderColor: "#0f1420",
+          borderWidth: 3,
+          hoverOffset: 12,
         },
       ],
     },
-    options: { plugins: { legend: { labels: { color: "#8b93a7" } } } },
+    options: {
+      cutout: "58%",
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { color: "#c9d2e3", usePointStyle: true, padding: 14 },
+        },
+        tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed}` } },
+      },
+    },
+    plugins: [centerTotal],
   });
 }
 
@@ -182,7 +214,9 @@ function drawFindingsChart(m) {
             m.jml.dormant,
             m.recert.revocations_recommended,
           ],
-          backgroundColor: "#5b8cff",
+          backgroundColor: ["#e0556b", "#e0793b", "#d6a53c", "#b07aef", "#46b1a6", "#5b8cff"],
+          borderRadius: 6,
+          maxBarThickness: 64,
         },
       ],
     },
@@ -202,12 +236,16 @@ const GRAPH_STYLE = [
     selector: "node",
     style: {
       label: "data(label)",
-      color: "#e6e9f2",
-      "font-size": 9,
+      color: "#c9d2e3",
+      "font-size": 10,
       "text-valign": "bottom",
       "text-margin-y": 4,
-      width: 22,
-      height: 22,
+      "text-background-color": "#0b0f18",
+      "text-background-opacity": 0.75,
+      "text-background-padding": 2,
+      "text-background-shape": "roundrectangle",
+      width: 24,
+      height: 24,
       "background-color": "#5b8cff",
       "border-width": 0,
     },
@@ -231,7 +269,7 @@ const GRAPH_STYLE = [
   },
   {
     selector: 'edge[kind="assume"]',
-    style: { "line-color": "#e0556b", "target-arrow-color": "#e0556b", "line-style": "dashed", width: 2 },
+    style: { "line-color": "#e0556b", "target-arrow-color": "#e0556b", "line-style": "dashed", width: 3 },
   },
   { selector: "node.highlight", style: { "border-width": 4, "border-color": "#ffffff" } },
   {
@@ -255,15 +293,26 @@ function renderLegend() {
   ).join("");
 }
 
-function mountGraph(elements) {
+function mountGraph(elements, mode) {
   if (state.cy) {
     state.cy.destroy();
   }
+  const layout =
+    mode === "path"
+      ? { name: "breadthfirst", directed: true, padding: 30, spacingFactor: 1.4 }
+      : {
+          name: "cose",
+          animate: false,
+          padding: 20,
+          nodeRepulsion: 9000,
+          idealEdgeLength: 95,
+          nodeOverlap: 24,
+        };
   state.cy = cytoscape({
     container: el("cy"),
     elements,
     style: GRAPH_STYLE,
-    layout: { name: "cose", animate: false, padding: 20, nodeRepulsion: 6000, idealEdgeLength: 70 },
+    layout,
     wheelSensitivity: 0.25,
   });
 }
@@ -320,13 +369,31 @@ async function tracePath() {
   const target = el("target-select").value;
   if (!identity) return;
   const result = await getJSON(`/api/graph/path?identity=${encodeURIComponent(identity)}&target=${encodeURIComponent(target)}`);
-  mountGraph([...result.graph.nodes, ...result.graph.edges]);
 
   if (!result.reachable) {
-    el("path-detail").innerHTML = `<div class="empty">${esc(identity)} não alcança ${esc(target)}.</div>`;
+    el("path-detail").innerHTML = `<div class="empty">${esc(identity)} não alcança ${esc(target)} por nenhum caminho.</div>`;
     return;
   }
+
+  // Renderiza uma visão limpa só da rota, em cadeia, para o caminho ficar óbvio.
   const p = result.path;
+  const nodeId = (s) => `${s.kind}:${s.ref}`;
+  const nodes = p.steps.map((s) => ({
+    data: { id: nodeId(s), label: s.label, kind: s.kind, account: s.account, privilege: "" },
+    classes: "highlight",
+  }));
+  const edges = [];
+  for (let i = 1; i < p.steps.length; i++) {
+    const a = nodeId(p.steps[i - 1]);
+    const b = nodeId(p.steps[i]);
+    const kind = p.steps[i].edge;
+    edges.push({
+      data: { id: `${a}__${b}`, source: a, target: b, kind },
+      classes: kind === "assume" ? "assume" : "highlight",
+    });
+  }
+  mountGraph([...nodes, ...edges], "path");
+
   const flags = [
     p.uses_assume ? sevBadge("critical") + " usa assunção de role" : "só standing access",
     p.crosses_account ? sevBadge("high") + " cruza fronteira de conta" : "conta única",

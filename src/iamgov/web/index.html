@@ -47,6 +47,14 @@
 
     <!-- Visão geral --------------------------------------------------------->
     <section id="view-overview" class="view active">
+      <div class="intro">
+        <h3>O que é esta tela</h3>
+        Painel de resumo do lab. Cada <strong>card</strong> conta um tipo de finding de
+        governança de acesso; os gráficos mostram a distribuição por severidade e por
+        categoria; a lista traz os caminhos de <strong>escalonamento</strong> que cruzam
+        contas. Comece por aqui e use o menu à esquerda para o detalhe de cada análise. Tudo
+        é <strong>read-only</strong> sobre dados fictícios, então explore à vontade.
+      </div>
       <div id="cards" class="cards"></div>
       <div class="grid-2">
         <div class="panel">
@@ -67,6 +75,24 @@
 
     <!-- Grafo --------------------------------------------------------------->
     <section id="view-graph" class="view">
+      <div class="intro">
+        <h3>Como usar o grafo</h3>
+        O grafo liga <strong>identities</strong> a <strong>privilégios</strong>: cada seta
+        quer dizer "ter isto leva àquilo". Para investigar um risco, escolha um
+        <strong>Target</strong> sensível e uma <strong>Identity</strong>, e clique em
+        <strong>Traçar caminho</strong> — o app abre a rota limpa, passo a passo, de como
+        aquela pessoa alcança aquele privilégio. <strong>Resetar</strong> volta ao grafo
+        completo. A aresta <strong>vermelha tracejada</strong> é um <em>assume-role</em>, ou
+        seja, escalonamento; quando a rota troca de conta, é escalonamento cross-account, o
+        achado mais crítico.
+        <div class="legend-inline">
+          <span><i class="dot" style="background:#5b8cff"></i>identity</span>
+          <span><i class="dot" style="background:#46b1a6"></i>group</span>
+          <span><i class="dot" style="background:#b07aef"></i>role</span>
+          <span><i class="dot" style="background:#d6a53c"></i>entitlement</span>
+          <span><i class="dot" style="background:#e0556b"></i>aresta assume</span>
+        </div>
+      </div>
       <div class="panel">
         <div class="graph-controls">
           <label>Target
@@ -86,6 +112,15 @@
 
     <!-- SoD ----------------------------------------------------------------->
     <section id="view-sod" class="view">
+      <div class="intro">
+        <h3>O que é Segregation of Duties</h3>
+        Pessoas que acumulam <strong>dois poderes que deveriam ser separados</strong> (por
+        exemplo, criar um vendor e aprovar o pagamento dele, ou subir deploy e aprovar a
+        própria mudança). Cada linha mostra os dois lados do conflito e a
+        <strong>procedência</strong> de cada um; a coluna de remediação diz se o conserto é
+        <strong>na identity</strong> (grant direto) ou <strong>no grupo</strong> (quando veio
+        por herança de nesting).
+      </div>
       <div class="panel">
         <h2>Segregation of Duties</h2>
         <p class="muted">Procedência por match: grant direto se conserta na identity, herdado no grupo.</p>
@@ -95,6 +130,18 @@
 
     <!-- JML ----------------------------------------------------------------->
     <section id="view-jml" class="view">
+      <div class="intro">
+        <h3>Ciclo de vida do acesso (Joiner / Mover / Leaver)</h3>
+        <ul>
+          <li><strong>Privilege creep</strong>: acesso além da baseline do cargo, em geral
+            arrastado de uma função anterior.</li>
+          <li><strong>Orphaned access</strong>: quem saiu ou foi desativado mas ainda carrega
+            acesso — a limpeza de maior valor.</li>
+          <li><strong>Dormant</strong>: ativo e com acesso, mas sem uso recente.</li>
+          <li><strong>Joiner gaps</strong>: cargo com grupos a mais ou a menos que a baseline
+            esperada.</li>
+        </ul>
+      </div>
       <div class="panel">
         <h2>Privilege creep</h2>
         <p class="muted">Acesso efetivo além da baseline do título.</p>
@@ -118,6 +165,14 @@
 
     <!-- Recert -------------------------------------------------------------->
     <section id="view-recert" class="view">
+      <div class="intro">
+        <h3>Como ler a Recertification</h3>
+        Transforma "todo o acesso" em "o que revisar, pior primeiro". A
+        <strong>worklist</strong> lista o que revogar, ordenado por <strong>risk score</strong>
+        (uma fórmula explicável: privilégio + SoD + dormancy + escalonamento). As
+        <strong>campanhas</strong> agrupam o acesso por manager, do jeito que um gestor
+        revisaria o próprio time. A ferramenta recomenda; quem executa é um humano.
+      </div>
       <div class="panel">
         <h2>Worklist de revogação</h2>
         <p class="muted">Toda linha recomendada para revogação, pior score primeiro.</p>
@@ -131,6 +186,13 @@
 
     <!-- Identities ---------------------------------------------------------->
     <section id="view-identities" class="view">
+      <div class="intro">
+        <h3>Diretório de identities</h3>
+        Todos os <strong>principals</strong> (humanos e service accounts), com status e o
+        tamanho do footprint de acesso de cada um. Use o filtro para achar por nome, cargo,
+        department ou conta. É o ponto de partida para entender quem é quem antes de olhar os
+        findings.
+      </div>
       <div class="panel">
         <div class="table-toolbar">
           <input id="identity-filter" class="input" placeholder="filtrar por nome, título, department, conta" />
@@ -141,6 +203,16 @@
 
     <!-- Editor de dados ----------------------------------------------------->
     <section id="view-editor" class="view">
+      <div class="intro">
+        <h3>Editor de cenários</h3>
+        Edite o dataset do lab pelo navegador: escolha um tipo (accounts, entitlements,
+        groups, roles, identities, regras de SoD), e crie, altere ou remova. Toda edição é
+        <strong>validada na hora</strong> (referência inexistente, id duplicado e ciclo de
+        grupo são recusados com a mensagem do erro) e <strong>recalcula todos os findings</strong>.
+        <strong>Restaurar padrão</strong> devolve tudo ao estado inicial. É o dataset sintético
+        do lab, nunca uma fonte de identidade real. Experimente: crie uma identity nova num
+        grupo perigoso e veja o SoD e o escalonamento reagirem.
+      </div>
       <div class="panel">
         <div class="editor-toolbar">
           <div class="kind-tabs" id="kind-tabs"></div>

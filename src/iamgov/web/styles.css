@@ -160,6 +160,25 @@ tr:hover td { background: rgba(91, 140, 255, 0.05); }
 .footer { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border); }
 .empty { color: var(--muted); font-style: italic; padding: 8px 0; }
 
+/* Intro / tutorial por tela ------------------------------------------------*/
+.intro {
+  background: linear-gradient(90deg, rgba(91,140,255,0.08), transparent 60%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.intro h3 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
+.intro strong { color: var(--text); }
+.intro ul { margin: 8px 0 0; padding-left: 18px; }
+.intro li { margin: 2px 0; }
+.intro .legend-inline { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.intro .legend-inline span { display: flex; align-items: center; gap: 6px; }
+.intro .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
 /* Data editor --------------------------------------------------------------*/
 .editor-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .kind-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
