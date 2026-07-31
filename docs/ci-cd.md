@@ -52,8 +52,9 @@ Rodam só quando a `main` avança.
 
 1. `build + push da imagem`: constrói a imagem e publica no GitHub Container Registry (GHCR),
    com tag `latest` e a tag do SHA do commit, para rastreabilidade.
-2. `deploy`: a plataforma de hospedagem puxa a imagem (ou o repositório) e sobe o container com
-   um disco persistente em `/data`. Ver o blueprint abaixo.
+2. `deploy`: a plataforma de hospedagem puxa a imagem (ou o repositório) e sobe o container.
+   No free tier o estado é efêmero e o app se auto-semeia; num plano pago dá para montar um
+   disco em `/data` para persistir edições. Ver o blueprint abaixo.
 3. `live`: reverse proxy com TLS na frente, respondendo no DNS.
 
 ## Deploy: blueprint de plataforma
@@ -67,16 +68,22 @@ services:
     name: iam-governance-lab
     runtime: docker
     plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
     envVars:
       - key: IAMGOV_DB_PATH
         value: /data/iamgov.db
+      - key: IAMGOV_DATA_DIR
+        value: /app/data
       - key: DEMO_RESET_MINUTES
         value: "60"
-    disk:
-      name: iamgov-data
-      mountPath: /data
-      sizeGB: 1
 ```
+
+No free tier não há disco persistente, e o app foi feito para isso: ele se semeia do YAML
+embutido a cada start, então o SQLite efêmero sempre volta ao estado padrão. Para um demo
+público isso é desejável, o ambiente se autocura. O container escuta na porta que a plataforma
+injeta em `PORT` (o `Dockerfile` usa `${PORT:-8000}`), então o mesmo image roda em Render,
+Railway, Koyeb ou local sem mudança.
 
 Passo a passo no Render:
 
@@ -99,6 +106,7 @@ disco de `/data`, e `fly deploy` sobe. O DNS `*.fly.dev` sai na hora.
 
 ## Rollback
 
-A imagem carrega a tag do SHA, então voltar é apontar o deploy para a tag anterior. O estado
-fica no disco `/data` e não some no redeploy; se um cenário editado ficar ruim, o botão
-"Restore defaults" (ou o reset periódico) recompõe o dataset sem tocar na infra.
+A imagem carrega a tag do SHA, então voltar é apontar o deploy para a tag anterior. No free
+tier o estado é efêmero e volta ao seed a cada start; num plano com disco em `/data` o estado
+persiste no redeploy. Em qualquer caso, se um cenário editado ficar ruim, o botão "Restore
+defaults" (ou o reset periódico) recompõe o dataset sem tocar na infra.

@@ -1,6 +1,10 @@
-# Blueprint de deploy no Render (https://render.com).
-# New -> Blueprint -> aponta para o repositório. O Render builda o Dockerfile, cria o disco
-# em /data e entrega um DNS *.onrender.com com TLS automático.
+# Blueprint de deploy no Render (https://render.com), free tier, sem cartão.
+# New -> Blueprint -> aponta para o repositório. O Render builda o Dockerfile e entrega um
+# DNS *.onrender.com com TLS automático.
+#
+# No free tier não há disco persistente, e tudo bem: o app se semeia do YAML embutido a cada
+# start, então o banco (SQLite efêmero) volta ao estado padrão sozinho. Para um demo público
+# isso é uma feature, não um bug, o ambiente sempre se recupera.
 
 services:
   - type: web
@@ -9,6 +13,7 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: IAMGOV_DB_PATH
         value: /data/iamgov.db
@@ -16,12 +21,9 @@ services:
         value: /app/data
       - key: DEMO_RESET_MINUTES
         value: "60"
-      # Para proteger a edição e deixar só a leitura pública, defina os dois:
+      # Para deixar a EDIÇÃO só para você e manter a leitura pública, defina os dois abaixo
+      # no painel do Render (Environment) em vez de aqui:
       # - key: IAMGOV_AUTH_USER
       #   sync: false
       # - key: IAMGOV_AUTH_PASS
       #   sync: false
-    disk:
-      name: iamgov-data
-      mountPath: /data
-      sizeGB: 1
