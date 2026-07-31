@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iam-governance-lab</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">IG</span>
+      <div>
+        <div class="brand-name">iam-governance-lab</div>
+        <div class="brand-sub">IGA read-only</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="overview">Visão geral</button>
+      <button class="nav-item" data-view="graph">Grafo de privilégio</button>
+      <button class="nav-item" data-view="sod">Violações de SoD</button>
+      <button class="nav-item" data-view="jml">Lifecycle (JML)</button>
+      <button class="nav-item" data-view="recert">Recertification</button>
+      <button class="nav-item" data-view="identities">Identities</button>
+      <button class="nav-item" data-view="editor">Editor de dados</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div id="account-chips" class="chips"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="view-title">Visão geral</h1>
+        <p id="view-sub" class="muted">Dataset sintético multi-conta. Nada aqui muta a fonte.</p>
+      </div>
+      <div class="topbar-actions">
+        <span id="status-dot" class="status-dot" title="status da API"></span>
+        <button id="refresh" class="btn">Atualizar</button>
+      </div>
+    </header>
+
+    <!-- Visão geral --------------------------------------------------------->
+    <section id="view-overview" class="view active">
+      <div id="cards" class="cards"></div>
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Violações de SoD por severidade</h2>
+          <canvas id="chart-sod" height="200"></canvas>
+        </div>
+        <div class="panel">
+          <h2>Findings</h2>
+          <canvas id="chart-findings" height="200"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Privilege escalation cross-account</h2>
+        <p class="muted">Caminhos mais curtos em que uma identity consegue assumir role até um target sensível em outra conta.</p>
+        <div id="escalation-list" class="path-list"></div>
+      </div>
+    </section>
+
+    <!-- Grafo --------------------------------------------------------------->
+    <section id="view-graph" class="view">
+      <div class="panel">
+        <div class="graph-controls">
+          <label>Target
+            <select id="target-select"></select>
+          </label>
+          <label>Identity
+            <select id="identity-select"></select>
+          </label>
+          <button id="trace-btn" class="btn btn-primary">Traçar caminho</button>
+          <button id="reset-graph" class="btn">Resetar</button>
+          <div class="legend" id="graph-legend"></div>
+        </div>
+        <div id="cy" class="cy"></div>
+        <div id="path-detail" class="path-detail"></div>
+      </div>
+    </section>
+
+    <!-- SoD ----------------------------------------------------------------->
+    <section id="view-sod" class="view">
+      <div class="panel">
+        <h2>Segregation of Duties</h2>
+        <p class="muted">Procedência por match: grant direto se conserta na identity, herdado no grupo.</p>
+        <div id="sod-table"></div>
+      </div>
+    </section>
+
+    <!-- JML ----------------------------------------------------------------->
+    <section id="view-jml" class="view">
+      <div class="panel">
+        <h2>Privilege creep</h2>
+        <p class="muted">Acesso efetivo além da baseline do título.</p>
+        <div id="creep-table"></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Orphaned access (leavers)</h2>
+          <div id="orphan-table"></div>
+        </div>
+        <div class="panel">
+          <h2>Dormant access</h2>
+          <div id="dormant-table"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Joiner gaps</h2>
+        <div id="joiner-table"></div>
+      </div>
+    </section>
+
+    <!-- Recert -------------------------------------------------------------->
+    <section id="view-recert" class="view">
+      <div class="panel">
+        <h2>Worklist de revogação</h2>
+        <p class="muted">Toda linha recomendada para revogação, pior score primeiro.</p>
+        <div id="worklist-table"></div>
+      </div>
+      <div class="panel">
+        <h2>Campanhas por reviewer</h2>
+        <div id="campaigns"></div>
+      </div>
+    </section>
+
+    <!-- Identities ---------------------------------------------------------->
+    <section id="view-identities" class="view">
+      <div class="panel">
+        <div class="table-toolbar">
+          <input id="identity-filter" class="input" placeholder="filtrar por nome, título, department, conta" />
+        </div>
+        <div id="identities-table"></div>
+      </div>
+    </section>
+
+    <!-- Editor de dados ----------------------------------------------------->
+    <section id="view-editor" class="view">
+      <div class="panel">
+        <div class="editor-toolbar">
+          <div class="kind-tabs" id="kind-tabs"></div>
+          <div class="editor-actions">
+            <button id="editor-new" class="btn btn-primary">Novo</button>
+            <button id="editor-restore" class="btn">Restaurar padrão</button>
+          </div>
+        </div>
+        <div id="editor-msg" class="editor-msg"></div>
+        <div class="editor-grid">
+          <div id="editor-list" class="editor-list"></div>
+          <div id="editor-form" class="editor-form"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer muted">
+      iam-governance-lab &middot; FastAPI + NetworkX + Cytoscape.js + Chart.js &middot; dados fictícios
+    </footer>
+  </main>
+</body>
+</html>
