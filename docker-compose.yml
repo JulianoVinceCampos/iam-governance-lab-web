@@ -1,0 +1,26 @@
+# iam-governance-lab: one service, one volume for the SQLite database.
+#   docker compose up --build   then open http://localhost:8000
+#
+# The YAML in the image seeds an empty database on first start. DEMO_RESET_MINUTES makes a
+# public demo self-heal by restoring defaults on an interval. Set IAMGOV_AUTH_* to require
+# credentials for edits (reads stay open); put TLS in front for a real deployment.
+
+services:
+  iamgov:
+    build: .
+    image: iam-governance-lab:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - iamgov-data:/data
+    environment:
+      IAMGOV_DB_PATH: /data/iamgov.db
+      IAMGOV_DATA_DIR: /app/data
+      DEMO_RESET_MINUTES: "60"
+      # DATABASE_URL: postgresql+psycopg://user:pass@db:5432/iamgov
+      # IAMGOV_AUTH_USER: admin
+      # IAMGOV_AUTH_PASS: change-me
+    restart: unless-stopped
+
+volumes:
+  iamgov-data:
