@@ -1,0 +1,163 @@
+# iam-governance-lab
+
+Governança de acesso IAM/IGA **read-only** sobre dados sintéticos multi-conta. O motor lê um
+dataset, pontua o risco e reporta; nunca escreve num store de identidades real. Acompanha um
+dashboard web interativo e um editor de cenários persistido em banco.
+
+Responde as quatro perguntas que uma revisão de acesso de verdade faz:
+
+- **Segregation of Duties** — quem carrega uma combinação tóxica de deveres, e isso veio de
+  grant direto ou herdado por nesting de grupo?
+- **Privilege reachability** — quem consegue *alcançar* um privilégio sensível, atravessando
+  fronteira de conta, e por qual caminho exato?
+- **Lifecycle (JML)** — qual acesso é resíduo de troca de função (privilege creep), é de um
+  leaver, ou está dormante?
+- **Recertification** — diante disso, o que revogar, pior primeiro, com um score explicável?
+
+> Dados fictícios, criados para exercitar cada control. Ver [`data/`](data/).
+
+## Sumário
+
+- [Destaques](#destaques)
+- [Arquitetura](#arquitetura)
+- [Como rodar](#como-rodar)
+- [O dashboard](#o-dashboard)
+- [Deploy](#deploy)
+- [Testes e quality gates](#testes-e-quality-gates)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Documentação](#documentação)
+
+## Destaques
+
+| Capacidade | O que entrega |
+| --- | --- |
+| Findings rastreáveis | Cada violação de SoD nomeia os dois entitlements e a cadeia de grupos que os trouxe; cada escalonamento imprime o caminho inteiro, aresta por aresta. |
+| Score explicável | O risk score de recertification é uma fórmula documentada, termo a termo, não uma caixa-preta. |
+| Escopo honesto | O que o modelo não avalia (condition keys, SCPs, deny) está escrito antes de qualquer conclusão. |
+| Editor de cenários | Cria, edita e remove objetos pelo browser; toda edição é validada e recalcula os findings na hora. |
+| Restore em um clique | O dataset vive em banco e se semeia de YAML; um botão reconstrói tudo, então um demo público sempre se recupera. |
+| Deploy em container | Uma imagem, um volume; sobe atrás de um DNS com TLS via reverse proxy. |
+
+## Arquitetura
+
+Visão de contexto (diagramas C4 completos e de sequência em
+[docs/arquitetura.md](docs/arquitetura.md)):
+
+```mermaid
+flowchart LR
+    user([Analista / visitante]) -->|HTTPS| spa[Dashboard web]
+    spa -->|JSON| api[API FastAPI]
+    api -->|SQLAlchemy| db[(Banco SQLite / PostgreSQL)]
+    seed[/Seed YAML/] -->|semeia se vazio| api
+    api --> engines[["Engines: access, SoD,
+    reachability, JML, recert"]]
+```
+
+Três decisões que atravessam o projeto:
+
+- **Standing access e reachable access são noções separadas.** SoD e recertification usam
+  standing access (grants diretos mais o fecho transitivo de grupos). Reachability soma as
+  arestas de assume-role e calcula o que se obtém escalando. Misturar esconde o risco.
+- **Trust é modelado por conta.** A aresta de assume só existe quando o lado identity-based
+  (o entitlement lista o role) e o resource-based (o role confia na conta, ou em `*`)
+  concordam, espelhando o `sts:AssumeRole`.
+- **O dataset valida antes de computar.** Referência inexistente, id duplicado e ciclo de
+  nesting falham no load, então dataset quebrado nunca produz finding calado e errado.
+
+## Como rodar
+
+Requer Python 3.11+.
+
+```bash
+python -m venv .venv
+# Windows:  .venv\Scripts\activate
+# Unix:     source .venv/bin/activate
+pip install -e ".[dev]"
+
+iamgov validate --data data          # valida o dataset
+iamgov scan --data data              # headline metrics em JSON
+iamgov report --data data --out out  # gera governance.report.{json,md}
+iamgov serve --data data             # sobe API + dashboard em http://127.0.0.1:8000
+```
+
+No Windows sem `make`, use o Python do venv direto: `.venv\Scripts\python.exe -m iamgov.cli serve`.
+
+Na primeira subida o app cria um SQLite (`iamgov.db`) e o semeia com o YAML de `data/`.
+
+## O dashboard
+
+| View | Conteúdo |
+| --- | --- |
+| Visão geral | Cards de headline, SoD por severidade, gráfico de findings e os caminhos de escalonamento cross-account. |
+| Grafo de privilégio | O grafo de acesso inteiro (Cytoscape.js). Escolha um target e uma identity, clique em *Traçar caminho*, e a rota de escalonamento fica destacada e descrita passo a passo. |
+| Violações de SoD | Cada violação com procedência por match e onde consertar (identity ou grupo). |
+| Lifecycle (JML) | Privilege creep, orphaned access, dormancy e joiner gaps. |
+| Recertification | A worklist de revogação e as campanhas por reviewer. |
+| Identities | Cada principal com status e footprint de acesso, filtrável. |
+| Editor de dados | CRUD de accounts, entitlements, groups, roles, identities e regras de SoD, com validação de integridade e **Restore defaults**. |
+
+## Deploy
+
+Um único container; o estado é um arquivo SQLite num volume, semeado pelo YAML embutido.
+
+```bash
+docker compose up --build      # abre http://localhost:8000
+```
+
+Para um DNS público, o repositório traz um blueprint de Render (`render.yaml`); o passo a
+passo, as variáveis de ambiente e a opção de auth só na escrita estão em
+[docs/ci-cd.md](docs/ci-cd.md).
+
+## Testes e quality gates
+
+```bash
+ruff check src tests    # lint
+mypy                    # type check strict
+pytest                  # testes de unidade + API
+```
+
+Duas camadas de teste: um dataset mínimo montado em código com respostas calculadas à mão
+(regressão de engine falha localizada) e asserts que travam os números do dataset publicado
+(mudança no seed passa a ser intencional). O CI roda os três gates em Python 3.11 a 3.13 e
+ainda builda a imagem.
+
+## Estrutura do projeto
+
+```
+src/iamgov/
+  model.py          domínio tipado + integridade referencial
+  loader.py         YAML -> Dataset com validação
+  access.py         standing access com procedência
+  sod.py            detecção de segregation of duties
+  reachability.py   grafo de acesso, caminhos de escalonamento, export Cytoscape
+  jml.py            joiner / mover / leaver + privilege creep
+  recert.py         risk score, worklist de revogação, campanhas
+  report.py         agregação em JSON + Markdown
+  db.py             persistência SQLAlchemy (SQLite / PostgreSQL)
+  store.py          dataset editável em banco, validado ao vivo, restaurável
+  cli.py            validate / scan / report / serve
+  api.py            endpoints FastAPI (leitura + editor) + dashboard estático
+  web/              dashboard (index.html, styles.css, app.js)
+data/               dataset sintético
+tests/              testes de ground truth + testes de API
+docs/               arquitetura, CI/CD, plano de ação, docs por engine
+```
+
+## Documentação
+
+| Documento | Conteúdo |
+| --- | --- |
+| [plano-de-acao.md](docs/plano-de-acao.md) | O passo a passo de desenvolvimento, sequencial |
+| [arquitetura.md](docs/arquitetura.md) | C4 (contexto, contêiner, componentes) e diagramas de sequência |
+| [ci-cd.md](docs/ci-cd.md) | O ciclo de integração e entrega |
+| [modelo-de-dominio.md](docs/modelo-de-dominio.md) | As entidades e como se relacionam |
+| [sod.md](docs/sod.md) | Segregation of duties |
+| [reachability.md](docs/reachability.md) | O grafo de acesso e o escalonamento |
+| [jml.md](docs/jml.md) | Joiner/mover/leaver e privilege creep |
+| [recertificacao.md](docs/recertificacao.md) | O risk score, termo a termo |
+| [limitacoes.md](docs/limitacoes.md) | O que isto não faz |
+| [modelo-de-ameacas.md](docs/modelo-de-ameacas.md) | O que detecta e o que assume |
+
+## Licença
+
+MIT.
