@@ -50,7 +50,7 @@ def test_main_dataset_violation_counts(main_ds: Dataset) -> None:
     by_sev = {"low": 0, "medium": 0, "high": 0, "critical": 0}
     for v in violations:
         by_sev[v.severity.value] += 1
-    assert by_sev == {"low": 0, "medium": 0, "high": 2, "critical": 2}
+    assert by_sev == {"low": 9, "medium": 8, "high": 10, "critical": 10}
     # Alice herda a toxic combination inteira; Bob carrega payment direto.
     alice = next(v for v in violations if v.identity_id == "id-alice")
     assert alice.inherited_only is True

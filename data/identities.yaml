@@ -205,3 +205,106 @@
   manager_id: id-ivan
   last_activity_days: 60
   entitlement_ids: [ent-prod-db-read]  # disabled mas mantém um grant direto: orphaned
+
+# Analistas com acesso acumulado que cruza pedir/aprovar em vários domínios. Cada um viola as
+# quatro regras acima (report, budget, config, access), populando o painel de severidade em
+# low, medium, high e critical. Títulos fora das baselines e atividade recente de propósito,
+# para o cenário de SoD não contaminar os findings de joiner/creep/orphaned/dormancy.
+- id: id-sod-omar
+  name: Omar Teixeira
+  type: human
+  department: Operations
+  title: Operations Analyst
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 4
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-paula
+  name: Paula Nogueira
+  type: human
+  department: Finance
+  title: Business Analyst
+  home_account_id: acc-mgmt
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 6
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-rafael
+  name: Rafael Aguiar
+  type: human
+  department: Engineering
+  title: Support Engineer
+  home_account_id: acc-dev
+  status: active
+  manager_id: id-quinn
+  last_activity_days: 3
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-sofia
+  name: Sofia Rezende
+  type: human
+  department: Product
+  title: Product Analyst
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 9
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-tiago
+  name: Tiago Barbosa
+  type: human
+  department: Platform
+  title: Platform Engineer
+  home_account_id: acc-dev
+  status: active
+  manager_id: id-quinn
+  last_activity_days: 5
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-vera
+  name: Vera Lombardi
+  type: human
+  department: Security
+  title: Solutions Architect
+  home_account_id: acc-sec
+  status: active
+  manager_id: id-rachel
+  last_activity_days: 7
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-will
+  name: William Castro
+  type: human
+  department: Engineering
+  title: QA Engineer
+  home_account_id: acc-dev
+  status: active
+  manager_id: id-quinn
+  last_activity_days: 12
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-yara
+  name: Yara Medeiros
+  type: human
+  department: Data
+  title: Data Steward
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 8
+  entitlement_ids: [ent-report-build, ent-report-publish, ent-budget-request, ent-budget-approve, ent-config-change, ent-config-approve, ent-access-request, ent-access-approve]
+
+- id: id-sod-zeca
+  name: Zeca Pontes
+  type: human
+  department: Finance
+  title: Reporting Analyst
+  home_account_id: acc-prod
+  status: active
+  manager_id: id-ivan
+  last_activity_days: 10
+  entitlement_ids: [ent-report-build, ent-report-publish]

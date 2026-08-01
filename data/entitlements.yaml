@@ -116,3 +116,57 @@
   name: SIEM administration
   actions: ["siem:*"]
   privilege_level: high
+
+# --- Conjunto de conflitos de SoD -------------------------------------------
+# Entitlements de baixo/médio privilégio, criados aos pares para exercitar regras de SoD em
+# todas as severidades. Ficam fora de high/critical de propósito, para não virarem targets de
+# reachability nem arestas de escalonamento: o que importa aqui é a separação de deveres, e a
+# severidade vem da regra, não do privilégio do grant.
+- id: ent-report-build
+  account_id: acc-prod
+  name: Build financial report
+  actions: ["report:Build", "report:Draft"]
+  privilege_level: low
+  tags: [sodx-report-a, reporting]
+- id: ent-report-publish
+  account_id: acc-prod
+  name: Publish financial report
+  actions: ["report:Publish"]
+  privilege_level: low
+  tags: [sodx-report-b, reporting]
+- id: ent-budget-request
+  account_id: acc-mgmt
+  name: Request budget line
+  actions: ["budget:Request"]
+  privilege_level: medium
+  tags: [sodx-budget-a, finance]
+- id: ent-budget-approve
+  account_id: acc-mgmt
+  name: Approve budget line
+  actions: ["budget:Approve"]
+  privilege_level: medium
+  tags: [sodx-budget-b, finance]
+- id: ent-config-change
+  account_id: acc-dev
+  name: Submit configuration change
+  actions: ["config:Change"]
+  privilege_level: medium
+  tags: [sodx-config-a, change]
+- id: ent-config-approve
+  account_id: acc-dev
+  name: Approve configuration change
+  actions: ["config:ApproveChange"]
+  privilege_level: medium
+  tags: [sodx-config-b, change]
+- id: ent-access-request
+  account_id: acc-sec
+  name: Request access grant
+  actions: ["access:Request"]
+  privilege_level: medium
+  tags: [sodx-access-a, access]
+- id: ent-access-approve
+  account_id: acc-sec
+  name: Approve access grant
+  actions: ["access:Approve"]
+  privilege_level: medium
+  tags: [sodx-access-b, access]

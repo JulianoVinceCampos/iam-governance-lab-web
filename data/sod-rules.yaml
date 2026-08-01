@@ -40,3 +40,57 @@
     Um IAM administrator que também aprova pagamentos poderia se conceder o direito de
     aprovação e usá-lo. Não deve produzir violações neste dataset, e esse é o ponto: o engine
     reporta o que existe, não o que a gente gostaria de achar.
+
+# Regras que cobrem as quatro severidades, para o painel de severidade refletir um cenário
+# realista em que conflitos de separação existem em todos os níveis, não só nos mais graves.
+- id: sod-report-build-publish
+  name: Build and publish the same report
+  severity: low
+  set_a:
+    - match: tag
+      values: [sodx-report-a]
+  set_b:
+    - match: tag
+      values: [sodx-report-b]
+  rationale: >
+    Quem monta o relatório financeiro não deveria ser quem o publica sem revisão. É um
+    conflito leve, mas conta como separação de deveres.
+
+- id: sod-budget-request-approve
+  name: Request and approve the same budget
+  severity: medium
+  set_a:
+    - match: tag
+      values: [sodx-budget-a]
+  set_b:
+    - match: tag
+      values: [sodx-budget-b]
+  rationale: >
+    Solicitar e aprovar a própria linha de orçamento remove o segundo par de olhos sobre o
+    gasto.
+
+- id: sod-config-change-approve
+  name: Submit and approve the same configuration change
+  severity: high
+  set_a:
+    - match: tag
+      values: [sodx-config-a]
+  set_b:
+    - match: tag
+      values: [sodx-config-b]
+  rationale: >
+    Submeter e aprovar a própria mudança de configuração é a mesma quebra de controle do
+    deploy-and-approve, aplicada à malha de configuração.
+
+- id: sod-access-request-approve
+  name: Request and approve the same access grant
+  severity: critical
+  set_a:
+    - match: tag
+      values: [sodx-access-a]
+  set_b:
+    - match: tag
+      values: [sodx-access-b]
+  rationale: >
+    Pedir e aprovar o próprio acesso é auto-provisionamento: a identity se concede o que
+    quiser. É o conflito de separação mais grave, por isso critical.
