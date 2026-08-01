@@ -1,0 +1,28 @@
+version: 2
+
+# Dependabot mantém as três superfícies de dependência atualizadas e abre PR sozinho quando
+# sai versão nova ou correção de segurança: as libs Python, as actions do CI e a imagem base
+# do Dockerfile. Cada PR passa pelos mesmos quality gates antes de poder mergear.
+
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      python-deps:
+        patterns: ["*"]
+    labels: ["dependencies", "python"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: ["dependencies", "ci"]
+
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: ["dependencies", "docker"]

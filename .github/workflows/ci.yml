@@ -37,6 +37,31 @@ jobs:
       - name: Validate the shipped dataset
         run: python -m iamgov.cli validate --data data
 
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install (projeto + ferramentas de segurança)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "."
+          python -m pip install pip-audit semgrep
+
+      - name: Dependency audit (pip-audit)
+        # Falha se alguma dependência instalada tiver CVE conhecido. O fix é um bump de versão,
+        # e o Dependabot abre o PR sozinho.
+        run: python -m pip_audit --strict --progress-spinner off
+
+      - name: SAST (semgrep)
+        # Análise estática do nosso código com rulesets públicos do registry, sem token.
+        run: semgrep scan --config p/python --config p/security-audit --error --quiet src
+
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -54,7 +79,7 @@ jobs:
           test "${ok:-0}" = "1"
 
   publish:
-    needs: [check, docker]
+    needs: [check, security, docker]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:

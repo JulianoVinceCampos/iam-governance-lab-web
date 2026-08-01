@@ -6,13 +6,13 @@ dashboard web interativo e um editor de cenários persistido em banco.
 
 Responde as quatro perguntas que uma revisão de acesso de verdade faz:
 
-- **Segregation of Duties** — quem carrega uma combinação tóxica de deveres, e isso veio de
+- **Segregation of Duties**: quem carrega uma combinação tóxica de deveres, e isso veio de
   grant direto ou herdado por nesting de grupo?
-- **Privilege reachability** — quem consegue *alcançar* um privilégio sensível, atravessando
+- **Privilege reachability**: quem consegue *alcançar* um privilégio sensível, atravessando
   fronteira de conta, e por qual caminho exato?
-- **Lifecycle (JML)** — qual acesso é resíduo de troca de função (privilege creep), é de um
+- **Lifecycle (JML)**: qual acesso é resíduo de troca de função (privilege creep), é de um
   leaver, ou está dormante?
-- **Recertification** — diante disso, o que revogar, pior primeiro, com um score explicável?
+- **Recertification**: diante disso, o que revogar, pior primeiro, com um score explicável?
 
 > Dados fictícios, criados para exercitar cada control. Ver [`data/`](data/).
 
@@ -34,6 +34,7 @@ Responde as quatro perguntas que uma revisão de acesso de verdade faz:
 | Findings rastreáveis | Cada violação de SoD nomeia os dois entitlements e a cadeia de grupos que os trouxe; cada escalonamento imprime o caminho inteiro, aresta por aresta. |
 | Score explicável | O risk score de recertification é uma fórmula documentada, termo a termo, não uma caixa-preta. |
 | Escopo honesto | O que o modelo não avalia (condition keys, SCPs, deny) está escrito antes de qualquer conclusão. |
+| RBAC e ABAC lado a lado | O acesso é resolvido pelos dois mecanismos reais: grupo (RBAC) e atributo (ABAC). Cada finding diz de qual veio, e o grafo pinta um em teal e o outro em azul. |
 | Editor de cenários | Cria, edita e remove objetos pelo browser; toda edição é validada e recalcula os findings na hora. |
 | Restore em um clique | O dataset vive em banco e se semeia de YAML; um botão reconstrói tudo, então um demo público sempre se recupera. |
 | Deploy em container | Uma imagem, um volume; sobe atrás de um DNS com TLS via reverse proxy. |
@@ -104,9 +105,9 @@ Um único container; o estado é um arquivo SQLite num volume, semeado pelo YAML
 docker compose up --build      # abre http://localhost:8000
 ```
 
-Para um DNS público, o repositório traz um blueprint de Render (`render.yaml`); o passo a
-passo, as variáveis de ambiente e a opção de auth só na escrita estão em
-[docs/ci-cd.md](docs/ci-cd.md).
+Para um DNS público, o repositório traz um blueprint de Render (`render.yaml`) com auto-deploy
+no push. A topologia, o caminho do commit até o ar, as variáveis de ambiente e a opção de auth
+só na escrita estão em [docs/deploy.md](docs/deploy.md).
 
 ## Testes e quality gates
 
@@ -114,12 +115,17 @@ passo, as variáveis de ambiente e a opção de auth só na escrita estão em
 ruff check src tests    # lint
 mypy                    # type check strict
 pytest                  # testes de unidade + API
+pip-audit               # CVE conhecido nas dependências
+semgrep scan --config p/python --config p/security-audit src   # SAST
 ```
 
 Duas camadas de teste: um dataset mínimo montado em código com respostas calculadas à mão
 (regressão de engine falha localizada) e asserts que travam os números do dataset publicado
-(mudança no seed passa a ser intencional). O CI roda os três gates em Python 3.11 a 3.13 e
-ainda builda a imagem.
+(mudança no seed passa a ser intencional). Sobre os testes rodam ainda duas frentes de
+segurança: SAST com Semgrep e CodeQL, e auditoria de dependências com pip-audit, com o
+Dependabot abrindo os PRs de bump. O CI roda os gates de qualidade em Python 3.11 a 3.13,
+builda a imagem e a sobe para bater no health. Detalhe em [docs/ci-cd.md](docs/ci-cd.md) e a
+política em [SECURITY.md](SECURITY.md).
 
 ## Estrutura do projeto
 
@@ -149,7 +155,8 @@ docs/               arquitetura, CI/CD, plano de ação, docs por engine
 | --- | --- |
 | [plano-de-acao.md](docs/plano-de-acao.md) | O passo a passo de desenvolvimento, sequencial |
 | [arquitetura.md](docs/arquitetura.md) | C4 (contexto, contêiner, componentes) e diagramas de sequência |
-| [ci-cd.md](docs/ci-cd.md) | O ciclo de integração e entrega |
+| [ci-cd.md](docs/ci-cd.md) | O ciclo de integração e entrega, e os gates de segurança |
+| [deploy.md](docs/deploy.md) | A topologia de deploy, como está organizado e estruturado |
 | [modelo-de-dominio.md](docs/modelo-de-dominio.md) | As entidades e como se relacionam |
 | [sod.md](docs/sod.md) | Segregation of duties |
 | [reachability.md](docs/reachability.md) | O grafo de acesso e o escalonamento |

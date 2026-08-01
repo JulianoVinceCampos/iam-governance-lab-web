@@ -12,12 +12,14 @@ flowchart LR
         commit[Commit / Pull Request] --> lint[ruff: lint]
         commit --> types[mypy: strict]
         commit --> test[pytest: 3.11 / 3.12 / 3.13]
+        commit --> sec[semgrep + CodeQL + pip-audit]
         commit --> image[docker build + healthcheck]
     end
 
     lint --> gate{Tudo verde?}
     types --> gate
     test --> gate
+    sec --> gate
     image --> gate
 
     gate -- não --> stop[PR bloqueado, corrige]
@@ -40,8 +42,18 @@ Rodam em todo push e todo pull request. Qualquer um vermelho reprova.
 | Lint | `ruff check src tests` | Estilo, imports, armadilhas comuns |
 | Types | `mypy` (strict) | Contratos de tipo em todo o código |
 | Testes | `pytest` em 3.11, 3.12 e 3.13 | Correção dos engines (ground truth) e da API |
+| SAST | `semgrep scan` + CodeQL | Padrões inseguros no código-fonte |
+| Dependências | `pip-audit --strict` | CVE conhecido em qualquer lib instalada |
 | Imagem | `docker build` + `GET /api/health` | Que o container realmente sobe e responde |
 | Dataset | `iamgov validate --data data` | Que o seed publicado é íntegro |
+
+Duas frentes de segurança rodam em paralelo aos gates de qualidade. O **Semgrep** roda no job
+`security` do `ci.yml` com rulesets públicos do registry, e o **CodeQL** roda no workflow
+`codeql.yml`, publicando os achados na aba Security do repositório; ter dois motores de SAST
+reduz o ponto cego de cada um. O **pip-audit** falha se alguma dependência tiver CVE conhecido,
+e o **Dependabot** (`.github/dependabot.yml`) abre o PR de bump sozinho, para libs Python,
+actions do CI e a imagem base do Docker. A política completa está em
+[SECURITY.md](../SECURITY.md).
 
 O gate de imagem é importante: um teste verde não garante que o `Dockerfile` empacota tudo e
 que o app boota. Subir o container e bater no health fecha essa lacuna.
