@@ -9,6 +9,7 @@ identities; arquivos ausentes viram coleções vazias):
     roles.yaml         list[Role]
     identities.yaml    list[Identity]
     sod-rules.yaml     list[SoDRule]
+    abac-rules.yaml    list[AbacRule]
     policy.yaml        Policy (objeto, não lista)
 
 A validação é em duas fases: o Pydantic valida o shape de cada registro, depois o model
@@ -32,6 +33,7 @@ _LIST_FILES = {
     "roles": "roles.yaml",
     "identities": "identities.yaml",
     "sod_rules": "sod-rules.yaml",
+    "abac_rules": "abac-rules.yaml",
 }
 
 

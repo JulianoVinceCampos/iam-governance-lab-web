@@ -46,6 +46,26 @@ def test_assume_target_must_be_a_role() -> None:
         Dataset.model_validate(payload)
 
 
+def test_abac_rule_unknown_entitlement_rejected() -> None:
+    payload = _base()
+    payload["abac_rules"] = [
+        {"id": "ar1", "name": "bad", "conditions": [{"attribute": "department",
+         "values": ["X"]}], "entitlement_ids": ["ghost-ent"]}
+    ]
+    with pytest.raises(ValueError, match="unknown entitlement"):
+        Dataset.model_validate(payload)
+
+
+def test_abac_rule_bad_attribute_rejected() -> None:
+    payload = _base()
+    payload["abac_rules"] = [
+        {"id": "ar1", "name": "bad", "conditions": [{"attribute": "salary",
+         "values": ["100"]}], "entitlement_ids": ["e1"]}
+    ]
+    with pytest.raises(ValueError):
+        Dataset.model_validate(payload)
+
+
 def test_group_cycle_rejected() -> None:
     payload = _base()
     payload["groups"] = [

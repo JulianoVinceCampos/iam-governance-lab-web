@@ -81,6 +81,27 @@ def test_wildcard_trust_is_reachable() -> None:
     assert [p.identity_id for p in paths] == ["u"]
 
 
+def test_abac_grant_creates_typed_edge() -> None:
+    payload = {
+        "accounts": [{"id": "a1", "name": "A", "environment": "security"}],
+        "entitlements": [{"id": "e1", "account_id": "a1", "name": "Audit", "actions": ["x:*"]}],
+        "groups": [],
+        "roles": [],
+        "identities": [
+            {"id": "u", "name": "U", "type": "human", "department": "Security", "title": "t",
+             "home_account_id": "a1"}
+        ],
+        "abac_rules": [
+            {"id": "ar", "name": "sec", "conditions": [{"attribute": "department",
+             "values": ["Security"]}], "entitlement_ids": ["e1"]}
+        ],
+    }
+    ds = Dataset.model_validate(payload)
+    g = build_graph(ds)
+    edge = g.edges[node_id("identity", "u"), node_id("entitlement", "e1")]
+    assert edge["kind"] == "abac_grant"
+
+
 def test_main_dataset_escalation_all_cross_account(main_ds: Dataset) -> None:
     paths = escalation_paths(main_ds)
     assert len(paths) == 12

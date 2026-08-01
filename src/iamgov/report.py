@@ -11,8 +11,9 @@ from collections import Counter
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
+from .access import effective_access
 from .jml import dormant_identities, joiner_gaps, orphaned_access, privilege_creep
-from .model import Dataset, IdentityStatus, PrivilegeLevel
+from .model import Dataset, GrantSource, IdentityStatus, PrivilegeLevel
 from .reachability import PathStep, escalation_paths, reachability_report
 from .recert import build_campaigns, revocation_worklist
 from .sod import find_violations
@@ -25,6 +26,21 @@ def headline_metrics(ds: Dataset) -> dict[str, object]:
     status_counts = Counter(i.status.value for i in ds.identities)
     sev_counts = Counter(v.severity.value for v in violations)
     by_severity = {level.value: sev_counts.get(level.value, 0) for level in PrivilegeLevel}
+
+    # Perfil dos dois mecanismos de autorização que convivem: RBAC (grant por grupo) e ABAC
+    # (grant por atributo). Conta os grants resolvidos de cada fonte no standing access.
+    rbac_grants = 0
+    abac_grants = 0
+    identities_with_abac: set[str] = set()
+    for identity in ds.identities:
+        access = effective_access(ds, identity.id)
+        for options in access.grants.values():
+            for grant in options:
+                if grant.source is GrantSource.GROUP:
+                    rbac_grants += 1
+                elif grant.source is GrantSource.ABAC:
+                    abac_grants += 1
+                    identities_with_abac.add(identity.id)
 
     return {
         "accounts": len(ds.accounts),
@@ -49,6 +65,12 @@ def headline_metrics(ds: Dataset) -> dict[str, object]:
             "dormant": len(dormant_identities(ds)),
         },
         "recert": {"revocations_recommended": len(revocation_worklist(ds))},
+        "access_model": {
+            "rbac_grants": rbac_grants,
+            "abac_grants": abac_grants,
+            "abac_rules": len(ds.abac_rules),
+            "identities_with_abac": len(identities_with_abac),
+        },
     }
 
 

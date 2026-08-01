@@ -34,6 +34,7 @@ def test_roundtrip_validates_back_into_dataset(tmp_path: Path) -> None:
     assert len(ds.identities) == len(payload["identities"])
     assert len(ds.accounts) == len(payload["accounts"])
     assert len(ds.sod_rules) == len(payload["sod_rules"])
+    assert len(ds.abac_rules) == len(payload["abac_rules"])
     assert ds.policy.dormancy_days == payload["policy"]["dormancy_days"]
 
 

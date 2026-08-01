@@ -13,8 +13,9 @@ só alarmante.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 
-from .model import Dataset, GrantSource
+from .model import AbacRule, Dataset, GrantSource, Identity
 
 
 @dataclass(frozen=True)
@@ -26,10 +27,14 @@ class Grant:
     # Para grants de GROUP: a cadeia de membership do grupo atribuído direto até o grupo que de
     # fato carrega o entitlement. Vazia para grants DIRECT.
     group_path: tuple[str, ...] = ()
+    # Para grants de ABAC: o id da regra de atributo que concedeu o entitlement. Vazio nos demais.
+    rule_id: str = ""
 
     def describe(self) -> str:
         if self.source is GrantSource.DIRECT:
             return "direct"
+        if self.source is GrantSource.ABAC:
+            return f"abac via {self.rule_id}"
         return "group via " + " -> ".join(self.group_path)
 
 
@@ -43,12 +48,17 @@ class EffectiveAccess:
         return set(self.grants)
 
     def grant_for(self, entitlement_id: str) -> Grant:
-        """Devolve o grant mais direto de um entitlement (direto vence herdado)."""
-        options = self.grants[entitlement_id]
-        for g in options:
-            if g.source is GrantSource.DIRECT:
-                return g
-        return min(options, key=lambda g: len(g.group_path))
+        """Devolve o grant mais direto de um entitlement.
+
+        Precedência de procedência: um grant direto vence um atributo (ABAC), que vence um
+        herdado por grupo (RBAC); entre grupos, a cadeia de membership mais curta ganha. Assim
+        a remediação sugerida sempre aponta o vínculo mais próximo da identity.
+        """
+        order = {GrantSource.DIRECT: 0, GrantSource.ABAC: 1, GrantSource.GROUP: 2}
+        return min(
+            self.grants[entitlement_id],
+            key=lambda g: (order.get(g.source, 3), len(g.group_path)),
+        )
 
 
 def group_closure(ds: Dataset, group_id: str) -> dict[str, tuple[str, ...]]:
@@ -85,7 +95,29 @@ def effective_access(ds: Dataset, identity_id: str) -> EffectiveAccess:
                     Grant(eid, GrantSource.GROUP, group_path=path)
                 )
 
+    for rule in ds.abac_rules:
+        if _identity_matches(identity, rule):
+            for eid in rule.entitlement_ids:
+                grants.setdefault(eid, []).append(
+                    Grant(eid, GrantSource.ABAC, rule_id=rule.id)
+                )
+
     return EffectiveAccess(identity_id=identity_id, grants=grants)
+
+
+def _identity_attr(identity: Identity, attribute: str) -> str:
+    """Lê um atributo escalar da identity como string, resolvendo os enums."""
+    value = getattr(identity, attribute)
+    if isinstance(value, StrEnum):
+        return value.value
+    return "" if value is None else str(value)
+
+
+def _identity_matches(identity: Identity, rule: AbacRule) -> bool:
+    """True quando a identity casa todas as condições da regra (semântica E)."""
+    return all(
+        _identity_attr(identity, cond.attribute) in cond.values for cond in rule.conditions
+    )
 
 
 def effective_entitlement_ids(ds: Dataset, identity_id: str) -> set[str]:

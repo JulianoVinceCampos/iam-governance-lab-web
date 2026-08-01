@@ -66,8 +66,23 @@ def test_graph_path_unknown_identity_is_404() -> None:
 
 def test_editor_data_is_editable_shape() -> None:
     body = client.get("/api/data").json()
-    for kind in ("accounts", "entitlements", "groups", "roles", "identities", "sod_rules"):
+    for kind in (
+        "accounts",
+        "entitlements",
+        "groups",
+        "roles",
+        "identities",
+        "sod_rules",
+        "abac_rules",
+    ):
         assert kind in body
+
+
+def test_metrics_expose_access_model() -> None:
+    m = client.get("/api/metrics").json()
+    assert "access_model" in m
+    assert m["access_model"]["abac_rules"] >= 1
+    assert m["access_model"]["abac_grants"] >= 1
 
 
 def test_editor_upsert_then_delete_recomputes() -> None:

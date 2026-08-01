@@ -63,10 +63,23 @@ class IdentityStatus(StrEnum):
 
 
 class GrantSource(StrEnum):
-    """Como uma identity acabou carregando um entitlement."""
+    """Como uma identity acabou carregando um entitlement.
+
+    O lab modela os dois mecanismos de autorização que convivem numa organização real:
+
+    * ``GROUP`` é RBAC (role-based): o acesso vem de participar de um grupo, direta ou por
+      nesting. O grant é explícito e some quando a identity sai do grupo.
+    * ``ABAC`` é attribute-based: o acesso vem de a identity *casar um atributo* (department,
+      title, type, status), sem ninguém a ter colocado num grupo. O grant aparece e some
+      sozinho quando o atributo muda, que é a força e o risco do ABAC.
+
+    ``DIRECT`` é um grant pregado na própria identity, e ``ROLE_ASSUMPTION`` é acesso obtido
+    assumindo um role (tratado só na reachability, não é standing access).
+    """
 
     DIRECT = "direct"
     GROUP = "group"
+    ABAC = "abac"
     ROLE_ASSUMPTION = "role_assumption"
 
 
@@ -152,6 +165,34 @@ class SoDRule(_Base):
     rationale: str = ""
 
 
+class AbacCondition(_Base):
+    """Casa uma identity por um de seus atributos.
+
+    ``attribute`` é o nome de um atributo escalar da identity; ``values`` é o conjunto de
+    valores aceitos. A condição casa quando o valor do atributo da identity está em ``values``.
+    Só atributos estáveis e de baixo risco de digitação são permitidos, para uma regra de ABAC
+    nunca depender de um campo que o editor não expõe.
+    """
+
+    attribute: str = Field(pattern="^(department|title|type|status|home_account_id)$")
+    values: list[str] = Field(min_length=1)
+
+
+class AbacRule(_Base):
+    """Regra de ABAC: concede entitlements a toda identity cujos atributos casam.
+
+    Todas as condições precisam casar (semântica E). Diferente de um grupo RBAC, ninguém
+    atribui a regra a uma identity: ela se aplica sozinha a quem tiver o atributo, e deixa de
+    valer quando o atributo muda. É o standing access que aparece sem um clique de provisioning.
+    """
+
+    id: str
+    name: str
+    conditions: list[AbacCondition] = Field(min_length=1)
+    entitlement_ids: list[str] = Field(min_length=1)
+    description: str = ""
+
+
 class BaselinePolicy(_Base):
     """Baseline de joiner: os group ids que um título deveria ter, nem mais nem menos."""
 
@@ -181,6 +222,7 @@ class Dataset(_Base):
     roles: list[Role]
     identities: list[Identity]
     sod_rules: list[SoDRule] = Field(default_factory=list)
+    abac_rules: list[AbacRule] = Field(default_factory=list)
     policy: Policy = Field(default_factory=Policy)
 
     # --- índices -------------------------------------------------------------
@@ -198,6 +240,9 @@ class Dataset(_Base):
 
     def identity(self, identity_id: str) -> Identity:
         return _by_id(self.identities, identity_id, "identity")
+
+    def abac_rule(self, rule_id: str) -> AbacRule:
+        return _by_id(self.abac_rules, rule_id, "abac_rule")
 
     @property
     def account_of(self) -> dict[str, str]:
@@ -224,6 +269,8 @@ class Dataset(_Base):
         _require_unique([g.id for g in self.groups], "group")
         _require_unique([r.id for r in self.roles], "role")
         _require_unique([i.id for i in self.identities], "identity")
+        _require_unique([r.id for r in self.sod_rules], "sod_rule")
+        _require_unique([r.id for r in self.abac_rules], "abac_rule")
 
         for e in self.entitlements:
             _require(
@@ -256,6 +303,13 @@ class Dataset(_Base):
                 _require(eid in entitlement_ids, f"identity {i.id}: unknown entitlement {eid}")
             for gid in i.group_ids:
                 _require(gid in group_ids, f"identity {i.id}: unknown group {gid}")
+
+        for rule in self.abac_rules:
+            for eid in rule.entitlement_ids:
+                _require(
+                    eid in entitlement_ids,
+                    f"abac_rule {rule.id}: unknown entitlement {eid}",
+                )
 
         _check_no_group_cycles(self.groups)
         for b in self.policy.baselines:

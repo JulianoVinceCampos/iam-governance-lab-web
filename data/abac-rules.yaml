@@ -1,0 +1,29 @@
+# Regras de ABAC (attribute-based access). Ao contrário de um grupo RBAC, ninguém atribui a
+# regra a uma identity: ela concede o entitlement a QUALQUER identity cujos atributos casem, e
+# deixa de valer sozinha quando o atributo muda. Todas as condições precisam casar (E lógico).
+#
+# É o outro mecanismo de autorização que convive com o RBAC de grupos: onde o grupo é um
+# vínculo explícito e durável, o atributo é um grant implícito que aparece e some com o
+# cadastro da pessoa. As duas coisas somam no standing access, e o dashboard as pinta em cores
+# distintas (grupo em teal, atributo em azul) para deixar o mecanismo visível.
+
+- id: abac-security-baseline-audit
+  name: Security team gets audit read-only
+  conditions:
+    - attribute: department
+      values: [Security]
+  entitlement_ids: [ent-sec-audit-read]
+  description: >
+    Todo mundo do department Security enxerga a trilha de auditoria por atributo, sem precisar
+    entrar no grupo de auditores. Baseline de leitura que segue a pessoa enquanto ela for de
+    Security e some no dia em que ela trocar de área.
+
+- id: abac-service-accounts-logs
+  name: Service accounts get production log read
+  conditions:
+    - attribute: type
+      values: [service]
+  entitlement_ids: [ent-prod-read-logs]
+  description: >
+    Contas de serviço ganham leitura de logs de produção por atributo, para observabilidade,
+    sem um grant nominal por conta. Concede só leitura de log (low), nunca escrita.

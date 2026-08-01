@@ -18,9 +18,10 @@ findings nascem.
 
 Essa distinção atravessa o projeto inteiro.
 
-- **Standing access** é o que a identity carrega sem assumir nada: seus entitlements diretos mais
-  o fecho transitivo dos entitlements dos grupos. SoD e recertification operam sobre standing
-  access, porque é o que a identity de fato *tem*.
+- **Standing access** é o que a identity carrega sem assumir nada: seus entitlements diretos,
+  mais o fecho transitivo dos entitlements dos grupos (RBAC), mais os concedidos por regra de
+  atributo (ABAC). SoD e recertification operam sobre standing access, porque é o que a
+  identity de fato *tem*.
 - **Reachable access** soma a assunção de role. Seguindo as arestas de assume até o fixpoint,
   chega-se a tudo que a identity conseguiria obter escalando. A análise de reachability opera
   sobre esse conjunto maior.
@@ -29,19 +30,40 @@ Ninguém "tem" um role até assumi-lo, então role nunca é standing access. Man
 separados é o que permite dizer "a Erin tem read-only em dev, mas consegue assumir role até
 admin em produção", que é o finding que importa.
 
+## Dois mecanismos de autorização: RBAC e ABAC
+
+Uma organização real concede acesso por dois caminhos, e o lab modela os dois:
+
+- **RBAC** (role-based) é o acesso por **grupo**: a identity participa de um grupo, direta ou
+  por nesting, e herda os entitlements dele. O vínculo é explícito e durável, e some quando a
+  pessoa sai do grupo. É a espinha do modelo (`Group`, `member_of`).
+- **ABAC** (attribute-based) é o acesso por **atributo**: uma `AbacRule` concede entitlements a
+  qualquer identity cujos atributos casem uma condição (por exemplo, `department == Security`).
+  Ninguém atribui a regra a ninguém; ela vale sozinha para quem tiver o atributo, e deixa de
+  valer quando o atributo muda. É o standing access que aparece sem um clique de provisioning,
+  e por isso mesmo é o mais fácil de esquecer numa revisão.
+
+As condições de ABAC só casam atributos estáveis e de baixo risco de digitação (department,
+title, type, status, home_account_id), com semântica E entre elas. Os dois mecanismos somam no
+standing access e alimentam SoD, creep e recertification do mesmo jeito; o que muda é a
+procedência, e o dashboard os separa por cor no grafo (grupo em teal, atributo em azul).
+
 ## Procedência
 
 A resolução de acesso efetivo guarda, para cada entitlement, o *porquê* de a identity tê-lo: um
-grant direto, ou a cadeia exata de grupos aninhados que o trouxe. Procedência é o que torna o
-finding acionável. Grant direto se revoga na identity; herdado se conserta no grupo, e
-consertar lá conserta para todo mundo daquele grupo.
+grant direto, a cadeia exata de grupos aninhados que o trouxe (RBAC), ou a regra de atributo
+que o concedeu (ABAC). Procedência é o que torna o finding acionável. Grant direto se revoga na
+identity; herdado se conserta no grupo, e consertar lá conserta para todo mundo daquele grupo;
+por atributo se conserta na regra de ABAC ou no atributo da identity. Quando um mesmo
+entitlement vem por mais de um caminho, a procedência mostrada é a mais próxima da identity
+(direto vence atributo, que vence grupo).
 
 ## Integridade
 
 O dataset é validado antes de qualquer cálculo. O loader rejeita:
 
 - referência inexistente (entitlement apontando para account que não existe, membership em grupo
-  inexistente, `assume_target` que não é role),
+  inexistente, `assume_target` que não é role, `AbacRule` concedendo entitlement inexistente),
 - id duplicado dentro de qualquer coleção,
 - ciclo no nesting de grupo.
 

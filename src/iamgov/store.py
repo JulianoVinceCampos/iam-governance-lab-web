@@ -21,7 +21,15 @@ from .db import Database
 from .loader import load_dataset
 from .model import Dataset
 
-EDITABLE_KINDS = ("accounts", "entitlements", "groups", "roles", "identities", "sod_rules")
+EDITABLE_KINDS = (
+    "accounts",
+    "entitlements",
+    "groups",
+    "roles",
+    "identities",
+    "sod_rules",
+    "abac_rules",
+)
 
 
 class StoreError(ValueError):

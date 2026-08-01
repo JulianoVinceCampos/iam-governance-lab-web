@@ -2,7 +2,7 @@
 
 O grafo de acesso é dirigido, e uma aresta ``u -> v`` lê-se como "ter u permite obter v":
 
-    identity   -> entitlement     grant direto
+    identity   -> entitlement     grant direto (direct_grant) ou por atributo (abac_grant)
     identity   -> group           membership
     group      -> group           membership aninhada (filho -> pai)
     group      -> entitlement     o grupo carrega o entitlement
@@ -88,6 +88,18 @@ def build_graph(ds: Dataset) -> nx.DiGraph:
             g.add_edge(src, node_id("entitlement", eid), kind="direct_grant")
         for gid in i.group_ids:
             g.add_edge(src, node_id("group", gid), kind="member_of")
+
+    # ABAC: uma identity que casa uma regra de atributo alcança o entitlement direto, sem
+    # passar por grupo nenhum. A aresta é tipada à parte (abac_grant) para o grafo mostrar o
+    # acesso por atributo como um mecanismo distinto do RBAC de grupos.
+    from .access import _identity_matches  # local: evita ciclo de import no topo do módulo
+
+    for i in ds.identities:
+        src = node_id("identity", i.id)
+        for rule in ds.abac_rules:
+            if _identity_matches(i, rule):
+                for eid in rule.entitlement_ids:
+                    g.add_edge(src, node_id("entitlement", eid), kind="abac_grant")
 
     for grp in ds.groups:
         src = node_id("group", grp.id)

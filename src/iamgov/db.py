@@ -106,6 +106,15 @@ class SodRuleRow(Base):
     rationale: Mapped[str] = mapped_column(String, default="")
 
 
+class AbacRuleRow(Base):
+    __tablename__ = "abac_rules"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String, default="")
+    conditions: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    entitlement_ids: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    description: Mapped[str] = mapped_column(String, default="")
+
+
 class PolicyRow(Base):
     __tablename__ = "policy"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
@@ -120,6 +129,7 @@ _KIND_ROWS: dict[str, type[Any]] = {
     "roles": RoleRow,
     "identities": IdentityRow,
     "sod_rules": SodRuleRow,
+    "abac_rules": AbacRuleRow,
 }
 
 
