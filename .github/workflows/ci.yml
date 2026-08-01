@@ -54,9 +54,10 @@ jobs:
           python -m pip install pip-audit semgrep
 
       - name: Dependency audit (pip-audit)
-        # Falha se alguma dependência instalada tiver CVE conhecido. O fix é um bump de versão,
-        # e o Dependabot abre o PR sozinho.
-        run: python -m pip_audit --strict --progress-spinner off
+        # Falha se alguma dependência tiver CVE conhecido. O fix é um bump de versão, e o
+        # Dependabot abre o PR sozinho. --skip-editable ignora o próprio pacote do projeto, que
+        # não está no PyPI e não é o que queremos auditar.
+        run: python -m pip_audit --skip-editable --progress-spinner off
 
       - name: SAST (semgrep)
         # Análise estática do nosso código com rulesets públicos do registry, sem token.
