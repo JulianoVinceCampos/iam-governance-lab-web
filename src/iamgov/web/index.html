@@ -80,16 +80,21 @@
         O grafo liga <strong>identities</strong> a <strong>privilégios</strong>: cada seta
         quer dizer "ter isto leva àquilo". Para investigar um risco, escolha um
         <strong>Target</strong> sensível e uma <strong>Identity</strong>, e clique em
-        <strong>Traçar caminho</strong> — o app abre a rota limpa, passo a passo, de como
+        <strong>Traçar caminho</strong>: o app abre a rota limpa, passo a passo, de como
         aquela pessoa alcança aquele privilégio. <strong>Resetar</strong> volta ao grafo
         completo. A aresta <strong>vermelha tracejada</strong> é um <em>assume-role</em>, ou
         seja, escalonamento; quando a rota troca de conta, é escalonamento cross-account, o
-        achado mais crítico.
+        achado mais crítico. O acesso chega por dois mecanismos, pintados em cores distintas: a
+        aresta <strong>teal</strong> passando por um <em>group</em> é <strong>RBAC</strong>
+        (acesso por participar de um grupo); a aresta <strong>azul</strong> ligando a identity
+        direto ao entitlement é <strong>ABAC</strong> (acesso por casar um atributo, sem grupo
+        nenhum).
         <div class="legend-inline">
           <span><i class="dot" style="background:#5b8cff"></i>identity</span>
-          <span><i class="dot" style="background:#46b1a6"></i>group</span>
+          <span><i class="dot" style="background:#46b1a6"></i>group (RBAC)</span>
           <span><i class="dot" style="background:#b07aef"></i>role</span>
           <span><i class="dot" style="background:#d6a53c"></i>entitlement</span>
+          <span><i class="dot" style="background:#4aa8ff"></i>aresta ABAC</span>
           <span><i class="dot" style="background:#e0556b"></i>aresta assume</span>
         </div>
       </div>
@@ -117,7 +122,8 @@
         Pessoas que acumulam <strong>dois poderes que deveriam ser separados</strong> (por
         exemplo, criar um vendor e aprovar o pagamento dele, ou subir deploy e aprovar a
         própria mudança). Cada linha mostra os dois lados do conflito e a
-        <strong>procedência</strong> de cada um; a coluna de remediação diz se o conserto é
+        <strong>procedência</strong> de cada um (grant direto, herdado de grupo por RBAC, ou
+        concedido por atributo via ABAC); a coluna de remediação diz se o conserto é
         <strong>na identity</strong> (grant direto) ou <strong>no grupo</strong> (quando veio
         por herança de nesting).
       </div>
@@ -136,7 +142,7 @@
           <li><strong>Privilege creep</strong>: acesso além da baseline do cargo, em geral
             arrastado de uma função anterior.</li>
           <li><strong>Orphaned access</strong>: quem saiu ou foi desativado mas ainda carrega
-            acesso — a limpeza de maior valor.</li>
+            acesso, a limpeza de maior valor.</li>
           <li><strong>Dormant</strong>: ativo e com acesso, mas sem uso recente.</li>
           <li><strong>Joiner gaps</strong>: cargo com grupos a mais ou a menos que a baseline
             esperada.</li>
@@ -206,7 +212,8 @@
       <div class="intro">
         <h3>Editor de cenários</h3>
         Edite o dataset do lab pelo navegador: escolha um tipo (accounts, entitlements,
-        groups, roles, identities, regras de SoD), e crie, altere ou remova. Toda edição é
+        groups, roles, identities, regras de SoD, regras de ABAC), e crie, altere ou remova.
+        Toda edição é
         <strong>validada na hora</strong> (referência inexistente, id duplicado e ciclo de
         grupo são recusados com a mensagem do erro) e <strong>recalcula todos os findings</strong>.
         <strong>Restaurar padrão</strong> devolve tudo ao estado inicial. É o dataset sintético

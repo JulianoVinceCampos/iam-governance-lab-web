@@ -123,6 +123,11 @@ async function loadOverview() {
     card(metrics.recert.revocations_recommended, "Revogações recomendadas", `${jml.orphaned} orphaned / ${jml.dormant} dormant`, "warn"),
     card(metrics.accounts, "Contas", `${metrics.entitlements} entitlements / ${metrics.roles} roles`),
     card(jml.privilege_creep, "Privilege creep", `${jml.joiner_gaps} joiner gaps`),
+    card(
+      `${metrics.access_model.rbac_grants} / ${metrics.access_model.abac_grants}`,
+      "Grants RBAC / ABAC",
+      `${metrics.access_model.abac_rules} regras de atributo, ${metrics.access_model.identities_with_abac} identities via ABAC`
+    ),
   ].join("");
 
   drawSodChart(sod.by_severity);
@@ -187,7 +192,30 @@ function drawSodChart(bySeverity) {
       plugins: {
         legend: {
           position: "top",
-          labels: { color: "#c9d2e3", usePointStyle: true, padding: 14 },
+          labels: {
+            color: "#c9d2e3",
+            usePointStyle: true,
+            pointStyle: "circle",
+            padding: 14,
+            // Mostra os quatro níveis sempre, com a contagem, mesmo quando é zero
+            // (o doughnut esconde a fatia de valor 0, mas o dado precisa aparecer).
+            generateLabels(chart) {
+              const ds = chart.data.datasets[0];
+              return chart.data.labels.map((label, i) => {
+                const value = ds.data[i] || 0;
+                return {
+                  text: `${label}: ${value}`,
+                  fillStyle: ds.backgroundColor[i],
+                  strokeStyle: ds.backgroundColor[i],
+                  lineWidth: 0,
+                  pointStyle: "circle",
+                  fontColor: value ? "#c9d2e3" : "#6b7280",
+                  hidden: false,
+                  index: i,
+                };
+              });
+            },
+          },
         },
         tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed}` } },
       },
@@ -271,6 +299,12 @@ const GRAPH_STYLE = [
     selector: 'edge[kind="assume"]',
     style: { "line-color": "#e0556b", "target-arrow-color": "#e0556b", "line-style": "dashed", width: 3 },
   },
+  {
+    // ABAC: grant por atributo, identity -> entitlement direto. Azul, para separar do RBAC
+    // de grupo (teal) a olho nu.
+    selector: 'edge[kind="abac_grant"]',
+    style: { "line-color": "#4aa8ff", "target-arrow-color": "#4aa8ff", width: 2.4 },
+  },
   { selector: "node.highlight", style: { "border-width": 4, "border-color": "#ffffff" } },
   {
     selector: "edge.highlight",
@@ -281,9 +315,10 @@ const GRAPH_STYLE = [
 
 const LEGEND = [
   ["identity", "#5b8cff"],
-  ["group", "#46b1a6"],
+  ["group (RBAC)", "#46b1a6"],
   ["role", "#b07aef"],
   ["entitlement", "#d6a53c"],
+  ["aresta ABAC", "#4aa8ff"],
   ["aresta assume", "#e0556b"],
 ];
 
@@ -562,9 +597,11 @@ const EDIT_KINDS = [
   ["roles", "Roles"],
   ["identities", "Identities"],
   ["sod_rules", "SoD rules"],
+  ["abac_rules", "ABAC rules"],
 ];
 
 const PRIV = ["low", "medium", "high", "critical"];
+const ABAC_ATTRS = ["department", "title", "type", "status", "home_account_id"];
 
 // Descritores de campo por kind. types: text, number, enum, list (vírgula), ref, multiref, selectors.
 const FORMS = {
@@ -621,6 +658,13 @@ const FORMS = {
     { k: "set_a", type: "selectors" },
     { k: "set_b", type: "selectors" },
     { k: "rationale" },
+  ],
+  abac_rules: [
+    { k: "id", req: true },
+    { k: "name" },
+    { k: "conditions", type: "conditions" },
+    { k: "entitlement_ids", type: "multiref", ref: "entitlements" },
+    { k: "description" },
   ],
 };
 
@@ -722,6 +766,26 @@ function selectorRow(name, s) {
   </div>`;
 }
 
+// Condições de ABAC: casa uma identity por atributo. Mesma mecânica visual dos selectors do
+// SoD, mas o primeiro campo é o atributo (dropdown) e o segundo os valores aceitos.
+function conditionsHtml(name, list) {
+  const rows = (list && list.length ? list : [{ attribute: "department", values: [] }])
+    .map((c) => conditionRow(name, c))
+    .join("");
+  return `<div class="selectors conditions" data-name="${name}">${rows}
+    <button type="button" class="btn btn-sm" data-add-cond="${name}">+ condição</button></div>`;
+}
+
+function conditionRow(name, c) {
+  const opts = ABAC_ATTRS
+    .map((a) => `<option value="${a}" ${c.attribute === a ? "selected" : ""}>${a}</option>`)
+    .join("");
+  return `<div class="selector-row">
+    <select data-cond-attr="${name}">${opts}</select>
+    <input data-cond-values="${name}" placeholder="valores separados por vírgula" value="${esc((c.values || []).join(", "))}">
+  </div>`;
+}
+
 function fieldHtml(kind, f, value) {
   const type = f.type || "text";
   let control = "";
@@ -739,6 +803,8 @@ function fieldHtml(kind, f, value) {
     control = `<input name="${f.k}" type="number" value="${value ?? ""}">`;
   } else if (type === "selectors") {
     control = selectorsHtml(f.k, value);
+  } else if (type === "conditions") {
+    control = conditionsHtml(f.k, value);
   } else {
     control = `<input name="${f.k}" value="${esc(value ?? "")}" ${f.req ? "required" : ""}>`;
   }
@@ -770,8 +836,12 @@ function openEditorForm(item) {
   el("editor-form")
     .querySelectorAll("[data-add-sel]")
     .forEach((b) => (b.onclick = () => {
-      const wrap = b.parentElement;
       b.insertAdjacentHTML("beforebegin", selectorRow(b.dataset.addSel, { match: "tag", values: [] }));
+    }));
+  el("editor-form")
+    .querySelectorAll("[data-add-cond]")
+    .forEach((b) => (b.onclick = () => {
+      b.insertAdjacentHTML("beforebegin", conditionRow(b.dataset.addCond, { attribute: "department", values: [] }));
     }));
   el("entity-form").onsubmit = (e) => {
     e.preventDefault();
@@ -794,6 +864,21 @@ function readSelectors(name) {
   return out;
 }
 
+function readConditions(name) {
+  const container = el("editor-form").querySelector(`.conditions[data-name="${name}"]`);
+  const out = [];
+  container.querySelectorAll(".selector-row").forEach((row) => {
+    const attribute = row.querySelector(`[data-cond-attr="${name}"]`).value;
+    const values = row
+      .querySelector(`[data-cond-values="${name}"]`)
+      .value.split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    if (values.length) out.push({ attribute, values });
+  });
+  return out;
+}
+
 function buildEntity(kind) {
   const form = el("entity-form");
   const obj = {};
@@ -809,6 +894,8 @@ function buildEntity(kind) {
         .filter(Boolean);
     } else if (type === "selectors") {
       obj[f.k] = readSelectors(f.k);
+    } else if (type === "conditions") {
+      obj[f.k] = readConditions(f.k);
     } else if (type === "number") {
       const raw = form.querySelector(`[name="${f.k}"]`).value.trim();
       if (raw !== "") obj[f.k] = Number(raw);
