@@ -97,7 +97,7 @@ jobs:
         # GHCR exige owner/repo em minúsculas; github.repository pode ter maiúsculas.
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
       - name: Build and push the image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
