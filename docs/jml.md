@@ -17,7 +17,7 @@ conjunto que ela tem:
 Entitlements de standing access além do que a baseline do título concede. Onde joiner gaps
 trabalham no nível de grupo, creep trabalha no nível de entitlement e segue o nesting, então
 pega acesso que vazou por um grupo que a baseline nunca pretendeu. Cada item de creep guarda sua
-procedência, então dá para ver se entrou direto ou por um grupo.
+procedência, então dá para ver se entrou direto, por um grupo (RBAC) ou por atributo (ABAC).
 
 O caso canônico do dataset: um engineer promovido para um grupo de admin mas cujo título nunca
 foi atualizado. A baseline de "Dev Engineer" é o grupo de engineers; o grupo de admin aninha ele

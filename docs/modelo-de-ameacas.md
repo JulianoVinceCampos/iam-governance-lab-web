@@ -5,7 +5,8 @@ O que a ferramenta pretende pegar, o que ela assume, e onde ela para.
 ## O que detecta
 
 - **Quebras de segregation of duties**: uma identity que carrega efetivamente duas capacidades
-  conflitantes, por grant direto ou herdado via nesting de grupo.
+  conflitantes, por grant direto, herdado via nesting de grupo (RBAC) ou concedido por atributo
+  (ABAC).
 - **Caminhos de privilege escalation**: uma identity que consegue assumir role até um entitlement
   sensível que não tem direto, com o escalonamento cross-account destacado à parte.
 - **Exposição por wildcard trust**: roles que confiam em `*` e portanto são alcançáveis por

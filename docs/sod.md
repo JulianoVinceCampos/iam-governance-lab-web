@@ -29,11 +29,13 @@ entitlements distintos mantém o sinal limpo.
 Todo match registra como a identity o carrega:
 
 - grant **direto**, consertado revogando na identity;
-- **herdado**, mostrado como a cadeia de grupos (`grp-finance-lead -> grp-payments-ops`),
-  consertado no grupo.
+- **herdado** por RBAC, mostrado como a cadeia de grupos (`grp-finance-lead ->
+  grp-payments-ops`), consertado no grupo;
+- concedido por **atributo** (ABAC), mostrado como `abac via <regra>`, consertado na regra de
+  ABAC ou no atributo da identity.
 
 O `inherited_only` de uma violação é verdadeiro quando nenhum lado veio por grant direto. São
-esses os que se conserta uma vez, no grupo, para todo mundo.
+esses os que se conserta uma vez, no grupo (ou na regra de atributo), para todo mundo.
 
 ## Exemplo real
 

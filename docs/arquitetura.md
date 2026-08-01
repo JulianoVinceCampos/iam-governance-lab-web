@@ -71,7 +71,7 @@ C4Component
         Component(dbc, "db (db.py)", "SQLAlchemy", "Tabela por kind; seed transacional; to_payload")
         Component(loader, "loader (loader.py)", "Python", "Lê YAML e valida em duas fases")
         Component(model, "model (model.py)", "Pydantic", "Dataset tipado e integridade referencial")
-        Component(access, "access (access.py)", "Python", "Standing access com procedência")
+        Component(access, "access (access.py)", "Python", "Standing access com procedência: RBAC (grupo) e ABAC (atributo)")
         Component(sod, "sod (sod.py)", "Python", "Detecção de toxic combinations")
         Component(reach, "reachability (reachability.py)", "NetworkX", "Grafo, fecho transitivo, caminho de escalonamento")
         Component(jml, "jml (jml.py)", "Python", "Joiner/mover/leaver, privilege creep, dormancy")

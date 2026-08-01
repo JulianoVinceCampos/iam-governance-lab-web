@@ -9,7 +9,8 @@ Uma aresta `u -> v` lê-se como "ter u permite obter v":
 
 | Aresta | Significado |
 | --- | --- |
-| identity -> entitlement | grant direto |
+| identity -> entitlement | grant direto (`direct_grant`) |
+| identity -> entitlement | concedido por atributo, ABAC (`abac_grant`) |
 | identity -> group | membership |
 | group -> group | membership aninhada (filho -> pai) |
 | group -> entitlement | o grupo carrega o entitlement |
@@ -18,6 +19,12 @@ Uma aresta `u -> v` lê-se como "ter u permite obter v":
 
 Os nós são tipados (`identity`, `group`, `role`, `entitlement`) e carregam sua conta e, no caso
 de entitlement, o privilege level. O grafo é montado com NetworkX.
+
+As arestas de acesso vêm dos dois mecanismos de autorização: o RBAC de grupo (identity ->
+group -> entitlement) e o ABAC de atributo (identity -> entitlement direto, quando a identity
+casa uma regra de atributo). Ambas são standing access; a aresta ABAC nunca é de escalonamento.
+No dashboard, a aresta ABAC é pintada em azul, distinta do RBAC de grupo em teal, para o
+mecanismo ficar visível no grafo.
 
 ## Trust: os dois lados precisam concordar
 

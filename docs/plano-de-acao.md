@@ -43,7 +43,9 @@ Pronto quando: `ruff`, `mypy` e `pytest` rodam sem erro num projeto ainda esquel
 Objetivo: o coração do projeto, os tipos e as regras que impedem dado inválido de existir.
 
 1. Modelar em Pydantic (`model.py`): `Account`, `Entitlement`, `Group`, `Role`, `Identity`,
-   `SoDRule`, `Policy`, e o agregado `Dataset`. Modelos `frozen`, `extra="forbid"`.
+   `SoDRule`, `AbacRule` (com `AbacCondition`), `Policy`, e o agregado `Dataset`. Modelos
+   `frozen`, `extra="forbid"`. Os dois mecanismos de autorização, RBAC (grupo) e ABAC
+   (atributo), entram no modelo desde já via `GrantSource`.
 2. Separar as duas noções de acesso desde já: standing access (grants diretos + grupos) versus
    reachable access (o que se alcança assumindo role). Documentar por que são distintas.
 3. Implementar o `model_validator` do `Dataset`: unicidade de ids, integridade referencial
@@ -62,7 +64,9 @@ Objetivo: dados fictícios realistas que exercitam cada control de propósito.
 2. Semear casos deliberados: SoD herdado (grupo que aninha ops e approvers), escalonamento
    cross-account (dev que assume role admin em prod), wildcard trust, privilege creep, leaver
    com acesso, identity dormante.
-3. `policy.yaml`: `dormancy_days` e as baselines de cada título (joiner).
+3. `abac-rules.yaml`: regras de acesso por atributo (ex.: department Security ganha auditoria;
+   service accounts ganham leitura de log), para exercitar o ABAC ao lado do RBAC de grupo.
+4. `policy.yaml`: `dormancy_days` e as baselines de cada título (joiner).
 
 Pronto quando: o dataset carrega válido e contém pelo menos um exemplo de cada finding.
 
@@ -70,13 +74,15 @@ Pronto quando: o dataset carrega válido e contém pelo menos um exemplo de cada
 
 Objetivo: transformar o `Dataset` em findings, cada um com procedência.
 
-1. `access.py`: resolução de standing access com fecho transitivo de grupos e procedência
-   (grant direto ou a cadeia de grupos que trouxe o entitlement).
+1. `access.py`: resolução de standing access com fecho transitivo de grupos e procedência. O
+   standing access soma três fontes, cada uma com sua procedência: grant direto, herança de
+   grupo (RBAC, a cadeia de grupos que trouxe o entitlement) e regra de atributo (ABAC).
 2. `sod.py`: detecção de toxic combinations. Uma violação exige match nos dois lados da regra,
    em pelo menos dois entitlements distintos. Reportar procedência e se é herança pura.
 3. `reachability.py`: montar o grafo dirigido (NetworkX), computar fecho transitivo, extrair o
    caminho de escalonamento, marcar cross-account. Trust modelado por conta, aresta `assume`
-   só existe quando os dois lados concordam.
+   só existe quando os dois lados concordam. As arestas de acesso incluem o RBAC de grupo e o
+   ABAC de atributo (`abac_grant`), pintadas em cores distintas no grafo.
 4. `jml.py`: joiner gaps, privilege creep, orphaned access (leavers), dormancy.
 5. `recert.py`: risk score com fórmula documentada, buckets, recomendação, campanhas por
    manager e worklist de revogação.
@@ -139,8 +145,10 @@ Objetivo: uma imagem que sobe em qualquer lugar e um pipeline que protege a main
    `docker-compose.yml`.
 2. CI (GitHub Actions): lint, type, test na matriz de versões, mais build da imagem e
    healthcheck do container.
-3. CD: build e publicação da imagem, e deploy no destino (blueprint de plataforma). Detalhe em
-   `docs/ci-cd.md`.
+3. Segurança no CI: SAST com Semgrep e CodeQL, auditoria de dependências com pip-audit, e
+   Dependabot para libs, actions e imagem Docker. Detalhe em `docs/ci-cd.md` e `SECURITY.md`.
+4. CD: build e publicação da imagem, e deploy no destino (blueprint de plataforma). Detalhe em
+   `docs/deploy.md`.
 
 Pronto quando: `docker compose up` sobe o app e o pipeline passa verde no push.
 
@@ -151,7 +159,9 @@ Objetivo: expor sem virar um problema.
 1. Auth Basic opcional que protege só escrita (`IAMGOV_AUTH_USER`/`IAMGOV_AUTH_PASS`); leitura
    fica aberta para o público validar.
 2. Reset periódico opcional (`DEMO_RESET_MINUTES`) para o demo se autocurar.
-3. TLS via reverse proxy na frente. Nada de secret no código nem na imagem.
+3. CORS fechado por padrão (só same-origin, que é tudo que o dashboard precisa); origens extras
+   são opt-in explícito por `IAMGOV_CORS_ORIGINS`.
+4. TLS via reverse proxy na frente. Nada de secret no código nem na imagem.
 
 Pronto quando: dá para publicar num DNS com edição aberta e o demo se mantém saudável.
 
@@ -161,8 +171,10 @@ Objetivo: quem chega entende o porquê, não só o como.
 
 1. `README.md`: o que é, por que existe, quickstart, deploy.
 2. `docs/arquitetura.md`: C4 (contexto, contêiner, componente) e diagramas de sequência.
-3. `docs/ci-cd.md`: o ciclo de entrega.
-4. Docs por engine e `docs/limitacoes.md` + `docs/modelo-de-ameacas.md` com o escopo honesto.
+3. `docs/ci-cd.md`: o ciclo de entrega e os gates de segurança; `docs/deploy.md`: a topologia
+   e a estrutura do deploy; `SECURITY.md`: a política de segurança.
+4. Docs por engine (incluindo RBAC e ABAC no `docs/modelo-de-dominio.md`) e `docs/limitacoes.md`
+   + `docs/modelo-de-ameacas.md` com o escopo honesto.
 
 Pronto quando: um revisor navega do README aos diagramas e aos limites sem pedir contexto.
 

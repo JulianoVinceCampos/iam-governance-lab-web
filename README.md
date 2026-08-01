@@ -133,7 +133,7 @@ política em [SECURITY.md](SECURITY.md).
 src/iamgov/
   model.py          domínio tipado + integridade referencial
   loader.py         YAML -> Dataset com validação
-  access.py         standing access com procedência
+  access.py         standing access com procedência (RBAC de grupo + ABAC de atributo)
   sod.py            detecção de segregation of duties
   reachability.py   grafo de acesso, caminhos de escalonamento, export Cytoscape
   jml.py            joiner / mover / leaver + privilege creep
@@ -157,6 +157,7 @@ docs/               arquitetura, CI/CD, plano de ação, docs por engine
 | [arquitetura.md](docs/arquitetura.md) | C4 (contexto, contêiner, componentes) e diagramas de sequência |
 | [ci-cd.md](docs/ci-cd.md) | O ciclo de integração e entrega, e os gates de segurança |
 | [deploy.md](docs/deploy.md) | A topologia de deploy, como está organizado e estruturado |
+| [SECURITY.md](SECURITY.md) | Política de segurança e as camadas de defesa do repositório |
 | [modelo-de-dominio.md](docs/modelo-de-dominio.md) | As entidades e como se relacionam |
 | [sod.md](docs/sod.md) | Segregation of duties |
 | [reachability.md](docs/reachability.md) | O grafo de acesso e o escalonamento |

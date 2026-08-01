@@ -9,6 +9,11 @@ policy plugado numa nuvem viva.
 - **Sem condition keys.** Grants reais da AWS podem ser condicionados a tag, source IP, MFA,
   horário. O modelo trata entitlement como incondicional. Um grant tecnicamente presente mas
   inalcançável na prática (bloqueado por uma condition) ainda é contado aqui.
+- **ABAC simplificado.** As regras de ABAC casam atributos escalares da identity (department,
+  title, type, status, home_account_id) por igualdade, com E entre condições. É o suficiente
+  para modelar acesso por atributo como um mecanismo distinto do RBAC, mas não é a linguagem
+  completa de policy condition (sem operadores de comparação, sem tags de recurso, sem
+  interpolação de variáveis de sessão).
 - **Sem permission boundaries nem SCPs.** Nada limita a permissão efetiva do jeito que uma
   permission boundary ou uma SCP de Organizations limitaria. Acesso efetivo é grants mais herança
   de grupo, ponto.
