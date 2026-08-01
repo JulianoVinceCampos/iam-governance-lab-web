@@ -162,10 +162,10 @@ const centerTotal = {
     ctx.save();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#e6e9f2";
+    ctx.fillStyle = "#0038b8";
     ctx.font = "700 30px 'Segoe UI', sans-serif";
     ctx.fillText(String(total), x, y - 8);
-    ctx.fillStyle = "#8b93a7";
+    ctx.fillStyle = "#5a6b88";
     ctx.font = "12px 'Segoe UI', sans-serif";
     ctx.fillText("violações", x, y + 16);
     ctx.restore();
@@ -173,7 +173,7 @@ const centerTotal = {
 };
 
 const SOD_LEVELS = ["low", "medium", "high", "critical"];
-const SOD_COLORS = ["#4b9e6a", "#d6a53c", "#e0793b", "#e0556b"];
+const SOD_COLORS = ["#2f9e5e", "#c98a1a", "#e06a2b", "#d43d57"];
 
 function drawSodChart(bySeverity) {
   const ctx = el("chart-sod");
@@ -200,7 +200,7 @@ function drawSodChart(bySeverity) {
         );
         const mid = (p.startAngle + p.endAngle) / 2;
         const r = (p.innerRadius + p.outerRadius) / 2;
-        c.fillStyle = "#0b0f18";
+        c.fillStyle = "#ffffff";
         c.fillText(String(counts[i]), p.x + Math.cos(mid) * r, p.y + Math.sin(mid) * r);
       });
       c.restore();
@@ -217,7 +217,7 @@ function drawSodChart(bySeverity) {
           realCounts: counts,
           realTotal: total,
           backgroundColor: SOD_COLORS,
-          borderColor: "#0f1420",
+          borderColor: "#ffffff",
           borderWidth: 3,
           hoverOffset: 12,
         },
@@ -229,7 +229,7 @@ function drawSodChart(bySeverity) {
         legend: {
           position: "top",
           labels: {
-            color: "#c9d2e3",
+            color: "#0b1b3a",
             usePointStyle: true,
             pointStyle: "circle",
             padding: 14,
@@ -244,7 +244,7 @@ function drawSodChart(bySeverity) {
                   strokeStyle: SOD_COLORS[i],
                   lineWidth: 0,
                   pointStyle: "circle",
-                  fontColor: value ? "#c9d2e3" : "#6b7280",
+                  fontColor: value ? "#0b1b3a" : "#94a3b8",
                   hidden: false,
                   index: i,
                 };
@@ -279,7 +279,7 @@ function drawFindingsChart(m) {
             m.jml.dormant,
             m.recert.revocations_recommended,
           ],
-          backgroundColor: ["#e0556b", "#e0793b", "#d6a53c", "#b07aef", "#46b1a6", "#5b8cff"],
+          backgroundColor: ["#d43d57", "#e06a2b", "#c98a1a", "#7c3aed", "#0f9e8e", "#0038b8"],
           borderRadius: 6,
           maxBarThickness: 64,
         },
@@ -288,8 +288,8 @@ function drawFindingsChart(m) {
     options: {
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: "#8b93a7" }, grid: { color: "#2a3350" } },
-        y: { ticks: { color: "#8b93a7" }, grid: { color: "#2a3350" }, beginAtZero: true },
+        x: { ticks: { color: "#5a6b88" }, grid: { color: "#e2e8f4" } },
+        y: { ticks: { color: "#5a6b88" }, grid: { color: "#e2e8f4" }, beginAtZero: true },
       },
     },
   });
@@ -301,62 +301,62 @@ const GRAPH_STYLE = [
     selector: "node",
     style: {
       label: "data(label)",
-      color: "#c9d2e3",
+      color: "#0b1b3a",
       "font-size": 10,
       "text-valign": "bottom",
       "text-margin-y": 4,
-      "text-background-color": "#0b0f18",
-      "text-background-opacity": 0.75,
-      "text-background-padding": 2,
+      "text-background-color": "#ffffff",
+      "text-background-opacity": 0.9,
+      "text-background-padding": 3,
       "text-background-shape": "roundrectangle",
       width: 24,
       height: 24,
-      "background-color": "#5b8cff",
+      "background-color": "#0038b8",
       "border-width": 0,
     },
   },
-  { selector: 'node[kind="identity"]', style: { "background-color": "#5b8cff", shape: "ellipse" } },
-  { selector: 'node[kind="group"]', style: { "background-color": "#46b1a6", shape: "round-rectangle" } },
-  { selector: 'node[kind="role"]', style: { "background-color": "#b07aef", shape: "diamond", width: 26, height: 26 } },
-  { selector: 'node[kind="entitlement"]', style: { "background-color": "#d6a53c", shape: "hexagon" } },
-  { selector: 'node[privilege="critical"]', style: { "border-width": 3, "border-color": "#e0556b" } },
-  { selector: 'node[privilege="high"]', style: { "border-width": 2, "border-color": "#e0793b" } },
+  { selector: 'node[kind="identity"]', style: { "background-color": "#0038b8", shape: "ellipse" } },
+  { selector: 'node[kind="group"]', style: { "background-color": "#0f9e8e", shape: "round-rectangle" } },
+  { selector: 'node[kind="role"]', style: { "background-color": "#7c3aed", shape: "diamond", width: 26, height: 26 } },
+  { selector: 'node[kind="entitlement"]', style: { "background-color": "#c98a1a", shape: "hexagon" } },
+  { selector: 'node[privilege="critical"]', style: { "border-width": 3, "border-color": "#d43d57" } },
+  { selector: 'node[privilege="high"]', style: { "border-width": 2, "border-color": "#e06a2b" } },
   {
     selector: "edge",
     style: {
-      width: 1.4,
-      "line-color": "#2a3350",
-      "target-arrow-color": "#2a3350",
+      width: 1.6,
+      "line-color": "#b8c4de",
+      "target-arrow-color": "#b8c4de",
       "target-arrow-shape": "triangle",
       "curve-style": "bezier",
-      "arrow-scale": 0.8,
+      "arrow-scale": 0.9,
     },
   },
   {
     selector: 'edge[kind="assume"]',
-    style: { "line-color": "#e0556b", "target-arrow-color": "#e0556b", "line-style": "dashed", width: 3 },
+    style: { "line-color": "#d43d57", "target-arrow-color": "#d43d57", "line-style": "dashed", width: 3 },
   },
   {
-    // ABAC: grant por atributo, identity -> entitlement direto. Azul, para separar do RBAC
-    // de grupo (teal) a olho nu.
+    // ABAC: grant por atributo, identity -> entitlement direto. Azul azure, para separar do
+    // RBAC de grupo (teal) a olho nu.
     selector: 'edge[kind="abac_grant"]',
-    style: { "line-color": "#4aa8ff", "target-arrow-color": "#4aa8ff", width: 2.4 },
+    style: { "line-color": "#3f79e8", "target-arrow-color": "#3f79e8", width: 2.4 },
   },
-  { selector: "node.highlight", style: { "border-width": 4, "border-color": "#ffffff" } },
+  { selector: "node.highlight", style: { "border-width": 4, "border-color": "#0038b8" } },
   {
     selector: "edge.highlight",
-    style: { "line-color": "#ffffff", "target-arrow-color": "#ffffff", width: 3, "line-style": "solid", "z-index": 99 },
+    style: { "line-color": "#0038b8", "target-arrow-color": "#0038b8", width: 3, "line-style": "solid", "z-index": 99 },
   },
-  { selector: ".faded", style: { opacity: 0.15 } },
+  { selector: ".faded", style: { opacity: 0.12 } },
 ];
 
 const LEGEND = [
-  ["identity", "#5b8cff"],
-  ["group (RBAC)", "#46b1a6"],
-  ["role", "#b07aef"],
-  ["entitlement", "#d6a53c"],
-  ["aresta ABAC", "#4aa8ff"],
-  ["aresta assume", "#e0556b"],
+  ["identity", "#0038b8"],
+  ["group (RBAC)", "#0f9e8e"],
+  ["role", "#7c3aed"],
+  ["entitlement", "#c98a1a"],
+  ["aresta ABAC", "#3f79e8"],
+  ["aresta assume", "#d43d57"],
 ];
 
 function renderLegend() {
