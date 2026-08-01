@@ -115,6 +115,7 @@ disco de `/data`, e `fly deploy` sobe. O DNS `*.fly.dev` sai na hora.
 | `DATABASE_URL` | URL SQLAlchemy completa; troca SQLite por PostgreSQL |
 | `DEMO_RESET_MINUTES` | Se maior que 0, restaura o padrão nesse intervalo (demo se autocura) |
 | `IAMGOV_AUTH_USER` / `IAMGOV_AUTH_PASS` | Se ambos setados, exige Basic auth na escrita; leitura fica aberta |
+| `IAMGOV_CORS_ORIGINS` | Origens liberadas por CORS (lista por vírgula); vazio libera só same-origin |
 
 ## Rollback
 

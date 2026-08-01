@@ -81,6 +81,7 @@ e cria o serviço. Para domínio próprio, um CNAME para o host do Render; o TLS
 | `DATABASE_URL` | (não setado) | URL SQLAlchemy completa; troca SQLite por PostgreSQL |
 | `DEMO_RESET_MINUTES` | `60` no Render | Se maior que 0, restaura o padrão nesse intervalo |
 | `IAMGOV_AUTH_USER` / `IAMGOV_AUTH_PASS` | (não setados) | Se ambos setados, exige Basic auth na escrita; leitura fica aberta |
+| `IAMGOV_CORS_ORIGINS` | (não setado) | Origens liberadas por CORS, lista por vírgula. Vazio libera só same-origin, que é tudo que o dashboard precisa |
 
 Para manter a **edição só sua** e a leitura pública, defina `IAMGOV_AUTH_USER` e
 `IAMGOV_AUTH_PASS` no painel do Render (Environment, com `sync: false`), nunca no arquivo.

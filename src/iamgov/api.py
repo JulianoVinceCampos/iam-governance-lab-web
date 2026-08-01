@@ -17,6 +17,7 @@ Ambiente opcional:
     IAMGOV_DATA_DIR      diretório do seed YAML (padrão do container: /app/data)
     IAMGOV_AUTH_USER     se ambos setados, operações de escrita exigem HTTP Basic auth
     IAMGOV_AUTH_PASS
+    IAMGOV_CORS_ORIGINS  origens liberadas por CORS (lista por vírgula); vazio = só same-origin
     DEMO_RESET_MINUTES   se > 0, restaura o padrão automaticamente nesse intervalo
 """
 
@@ -149,12 +150,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(WriteAuthMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["*"],
-)
+
+
+def _cors_origins() -> list[str]:
+    """Origens permitidas por CORS, vindas de IAMGOV_CORS_ORIGINS (lista separada por vírgula).
+
+    O dashboard é servido pela mesma origem da API, então CORS nem é necessário para ele; por
+    isso o padrão é uma lista vazia (nenhuma origem cross-site liberada) em vez de um wildcard.
+    Consumir a API de outra origem passa a ser opt-in explícito por ambiente.
+    """
+    raw = os.environ.get("IAMGOV_CORS_ORIGINS", "").strip()
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+_cors = _cors_origins()
+if _cors:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors,
+        allow_methods=["GET", "POST", "DELETE"],
+        allow_headers=["*"],
+    )
 
 
 @app.get("/api/health")
