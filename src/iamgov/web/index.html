@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iam-governance-lab</title>
+  <script>
+    // Gate de demonstração client-side: sem "login" na sessão, manda para a tela de login.
+    // Não é controle de segurança (o painel é read-only e público); é só a experiência de UX.
+    (function () {
+      try {
+        var ok = localStorage.getItem("iamgov_demo_auth") === "1" ||
+                 sessionStorage.getItem("iamgov_demo_auth") === "1";
+        if (!ok) window.location.replace("/login.html");
+      } catch (e) { /* storage indisponível: segue sem gate */ }
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
@@ -30,6 +41,7 @@
     </nav>
     <div class="sidebar-foot">
       <div id="account-chips" class="chips"></div>
+      <button id="logout" class="btn btn-sm" style="width:100%;margin-top:12px">Sair</button>
     </div>
   </aside>
 

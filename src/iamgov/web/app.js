@@ -1028,6 +1028,18 @@ function init() {
     b.onclick = () => switchView(b.dataset.view);
   });
   el("refresh").onclick = refreshAll;
+  const logout = el("logout");
+  if (logout) {
+    logout.onclick = () => {
+      try {
+        localStorage.removeItem("iamgov_demo_auth");
+        sessionStorage.removeItem("iamgov_demo_auth");
+      } catch (e) {
+        /* storage indisponível */
+      }
+      window.location.replace("/login.html");
+    };
+  }
   renderAccountChips();
   healthCheck();
   loaded.add("overview");
