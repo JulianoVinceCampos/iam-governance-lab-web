@@ -153,7 +153,9 @@ const centerTotal = {
   id: "centerTotal",
   afterDraw(chart) {
     const ds = chart.data.datasets[0];
-    const total = ds.data.reduce((a, b) => a + (b || 0), 0);
+    // Usa o total real quando o dataset o expõe (o doughnut de SoD desenha slivers de
+    // placeholder para os níveis zerados, então somar ds.data mentiria o total).
+    const total = ds.realTotal ?? ds.data.reduce((a, b) => a + (b || 0), 0);
     const { ctx } = chart;
     const x = (chart.chartArea.left + chart.chartArea.right) / 2;
     const y = (chart.chartArea.top + chart.chartArea.bottom) / 2;
@@ -170,17 +172,62 @@ const centerTotal = {
   },
 };
 
+const SOD_LEVELS = ["low", "medium", "high", "critical"];
+const SOD_COLORS = ["#4b9e6a", "#d6a53c", "#e0793b", "#e0556b"];
+
+function hexRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
 function drawSodChart(bySeverity) {
   const ctx = el("chart-sod");
   state.charts.sod?.destroy();
+
+  const counts = SOD_LEVELS.map((k) => bySeverity[k] || 0);
+  const total = counts.reduce((a, b) => a + b, 0);
+  // Todos os quatro níveis aparecem sempre. Quem tem violação usa o valor real; quem está
+  // zerado ganha um sliver pequeno e apagado, só para marcar a categoria no anel sem inflar o
+  // dado. O número real vai no rótulo de cada fatia, no tooltip, na legenda e no total central.
+  const eps = (total > 0 ? total : SOD_LEVELS.length) * 0.06;
+  const renderData = counts.map((v) => (v > 0 ? v : eps));
+  const colors = counts.map((v, i) => (v > 0 ? SOD_COLORS[i] : hexRgba(SOD_COLORS[i], 0.3)));
+
+  // Escreve a contagem real no meio de cada fatia, inclusive nos slivers zerados, para o
+  // gráfico ficar auto-explicativo sem depender só da legenda.
+  const sliceLabels = {
+    id: "sodSliceLabels",
+    afterDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
+      const c = chart.ctx;
+      c.save();
+      c.font = "700 12px 'Segoe UI', sans-serif";
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      meta.data.forEach((arc, i) => {
+        const p = arc.getProps(
+          ["startAngle", "endAngle", "innerRadius", "outerRadius", "x", "y"],
+          true
+        );
+        const mid = (p.startAngle + p.endAngle) / 2;
+        const r = (p.innerRadius + p.outerRadius) / 2;
+        c.fillStyle = counts[i] > 0 ? "#0b0f18" : "#c9d2e3";
+        c.fillText(String(counts[i]), p.x + Math.cos(mid) * r, p.y + Math.sin(mid) * r);
+      });
+      c.restore();
+    },
+  };
+
   state.charts.sod = new Chart(ctx, {
     type: "doughnut",
     data: {
-      labels: ["low", "medium", "high", "critical"],
+      labels: SOD_LEVELS,
       datasets: [
         {
-          data: [bySeverity.low, bySeverity.medium, bySeverity.high, bySeverity.critical],
-          backgroundColor: ["#4b9e6a", "#d6a53c", "#e0793b", "#e0556b"],
+          data: renderData,
+          realCounts: counts,
+          realTotal: total,
+          backgroundColor: colors,
           borderColor: "#0f1420",
           borderWidth: 3,
           hoverOffset: 12,
@@ -197,16 +244,15 @@ function drawSodChart(bySeverity) {
             usePointStyle: true,
             pointStyle: "circle",
             padding: 14,
-            // Mostra os quatro níveis sempre, com a contagem, mesmo quando é zero
-            // (o doughnut esconde a fatia de valor 0, mas o dado precisa aparecer).
+            // Lista os quatro níveis com a contagem real, atenuando os que estão em zero.
             generateLabels(chart) {
               const ds = chart.data.datasets[0];
               return chart.data.labels.map((label, i) => {
-                const value = ds.data[i] || 0;
+                const value = ds.realCounts[i];
                 return {
                   text: `${label}: ${value}`,
-                  fillStyle: ds.backgroundColor[i],
-                  strokeStyle: ds.backgroundColor[i],
+                  fillStyle: SOD_COLORS[i],
+                  strokeStyle: SOD_COLORS[i],
                   lineWidth: 0,
                   pointStyle: "circle",
                   fontColor: value ? "#c9d2e3" : "#6b7280",
@@ -217,10 +263,12 @@ function drawSodChart(bySeverity) {
             },
           },
         },
-        tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed}` } },
+        tooltip: {
+          callbacks: { label: (c) => `${c.label}: ${c.dataset.realCounts[c.dataIndex]}` },
+        },
       },
     },
-    plugins: [centerTotal],
+    plugins: [centerTotal, sliceLabels],
   });
 }
 
