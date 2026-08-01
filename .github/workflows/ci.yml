@@ -47,21 +47,26 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install (projeto + ferramentas de segurança)
+      - name: Install the project (deps de runtime)
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e "."
-          python -m pip install pip-audit semgrep
 
       - name: Dependency audit (pip-audit)
-        # Falha se alguma dependência tiver CVE conhecido. O fix é um bump de versão, e o
-        # Dependabot abre o PR sozinho. --skip-editable ignora o próprio pacote do projeto, que
-        # não está no PyPI e não é o que queremos auditar.
-        run: python -m pip_audit --skip-editable --progress-spinner off
+        # Auditado ANTES de instalar o semgrep, de propósito: o semgrep arrasta dependências de
+        # tooling (por exemplo mcp) que não fazem parte do que este projeto entrega. Auditar só
+        # com o projeto instalado mantém o gate honesto, focado nas deps que de fato shipamos.
+        # --skip-editable ignora o próprio pacote (não está no PyPI, não é o alvo do audit).
+        run: |
+          python -m pip install pip-audit
+          python -m pip_audit --skip-editable --progress-spinner off
 
       - name: SAST (semgrep)
-        # Análise estática do nosso código com rulesets públicos do registry, sem token.
-        run: semgrep scan --config p/python --config p/security-audit --error --quiet src
+        # Análise estática do nosso código com rulesets públicos do registry, sem token. O
+        # semgrep entra só agora, para as dependências dele não poluírem o audit acima.
+        run: |
+          python -m pip install semgrep
+          semgrep scan --config p/python --config p/security-audit --error --quiet src
 
   docker:
     runs-on: ubuntu-latest
