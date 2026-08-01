@@ -16,6 +16,9 @@ Responde as quatro perguntas que uma revisão de acesso de verdade faz:
 
 > Dados fictícios, criados para exercitar cada control. Ver [`data/`](data/).
 
+Novo em IAM, IGA, RBAC ou ABAC? O que cada conceito é, por que está aqui e a intenção do
+projeto estão em [docs/conceitos.md](docs/conceitos.md).
+
 ## Sumário
 
 - [Destaques](#destaques)
@@ -153,6 +156,7 @@ docs/               arquitetura, CI/CD, plano de ação, docs por engine
 
 | Documento | Conteúdo |
 | --- | --- |
+| [conceitos.md](docs/conceitos.md) | O que é IAM, IGA, RBAC e ABAC, por que estão no projeto e a intenção |
 | [plano-de-acao.md](docs/plano-de-acao.md) | O passo a passo de desenvolvimento, sequencial |
 | [arquitetura.md](docs/arquitetura.md) | C4 (contexto, contêiner, componentes) e diagramas de sequência |
 | [ci-cd.md](docs/ci-cd.md) | O ciclo de integração e entrega, e os gates de segurança |
