@@ -1,5 +1,10 @@
 # iam-governance-lab
 
+[![ci](https://github.com/JulianoVinceCampos/iam-governance-lab-web/actions/workflows/ci.yml/badge.svg)](https://github.com/JulianoVinceCampos/iam-governance-lab-web/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/JulianoVinceCampos/iam-governance-lab-web/actions/workflows/codeql.yml/badge.svg)](https://github.com/JulianoVinceCampos/iam-governance-lab-web/actions/workflows/codeql.yml)
+![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13%20|%203.14-blue)
+[![License](https://img.shields.io/github/license/JulianoVinceCampos/iam-governance-lab-web)](LICENSE)
+
 **[Demo ao vivo](https://iam-governance-lab-web.onrender.com)** — instância pública, dados
 sintéticos, read-only. Pode levar alguns segundos para responder se estiver hibernando.
 
@@ -179,4 +184,4 @@ docs/               arquitetura, CI/CD, plano de ação, docs por engine
 
 ## Licença
 
-MIT.
+MIT — texto completo em [LICENSE](LICENSE).
