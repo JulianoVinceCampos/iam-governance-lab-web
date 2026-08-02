@@ -1,5 +1,8 @@
 # iam-governance-lab
 
+**[Demo ao vivo](https://iam-governance-lab-web.onrender.com)** — instância pública, dados
+sintéticos, read-only. Pode levar alguns segundos para responder se estiver hibernando.
+
 Governança de acesso IAM/IGA **read-only** sobre dados sintéticos multi-conta. O motor lê um
 dataset, pontua o risco e reporta; nunca escreve num store de identidades real. Acompanha um
 dashboard web interativo e um editor de cenários persistido em banco.
@@ -111,6 +114,10 @@ docker compose up --build      # abre http://localhost:8000
 Para um DNS público, o repositório traz um blueprint de Render (`render.yaml`) com auto-deploy
 no push. A topologia, o caminho do commit até o ar, as variáveis de ambiente e a opção de auth
 só na escrita estão em [docs/deploy.md](docs/deploy.md).
+
+A instância pública deste repositório roda em
+[iam-governance-lab-web.onrender.com](https://iam-governance-lab-web.onrender.com), com deploy
+automático a cada push na `main`.
 
 ## Testes e quality gates
 
