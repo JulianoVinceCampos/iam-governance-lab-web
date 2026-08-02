@@ -2,7 +2,7 @@
 # Serve a API e o dashboard em 0.0.0.0:8000. O estado vive num arquivo SQLite sob /data
 # (monte um volume para sobreviver a restart). O YAML em /app/data é o seed.
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
