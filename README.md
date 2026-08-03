@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13%20|%203.14-blue)
 [![License](https://img.shields.io/github/license/JulianoVinceCampos/iam-governance-lab-web)](LICENSE)
 
-**[Demo ao vivo](https://iam-governance-lab-web.onrender.com)** — instância pública, dados
+**[Demo ao vivo](https://iam-governance-lab-web.onrender.com)**: instância pública, dados
 sintéticos, read-only. Pode levar alguns segundos para responder se estiver hibernando.
 
 Governança de acesso IAM/IGA **read-only** sobre dados sintéticos multi-conta. O motor lê um
@@ -184,4 +184,4 @@ docs/               arquitetura, CI/CD, plano de ação, docs por engine
 
 ## Licença
 
-MIT — texto completo em [LICENSE](LICENSE).
+MIT. Texto completo em [LICENSE](LICENSE).
